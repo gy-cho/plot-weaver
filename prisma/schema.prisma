@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 사용자 계정
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  maps RelationshipMap[]
+}
+
+// 관계도 (한 사용자가 여러 개를 가질 수 있음)
+model RelationshipMap {
+  id        String   @id @default(uuid())
+  title     String   @default("새 관계도")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  persons       Person[]
+  relationships Relationship[]
+}
+
+// 인물 (관계도의 노드)
+model Person {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String   @default("c-coral")
+  imageUrl    String?
+  positionX   Float?   // 관계도 화면에서의 좌표 (React Flow가 사용)
+  positionY   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mapId String
+  map   RelationshipMap @relation(fields: [mapId], references: [id], onDelete: Cascade)
+
+  // 이 인물이 "출발점"인 관계들
+  relationshipsFrom Relationship[] @relation("RelationshipFrom")
+  // 이 인물이 "도착점"인 관계들
+  relationshipsTo   Relationship[] @relation("RelationshipTo")
+}
+
+// 인물 간 관계 (관계도의 엣지)
+model Relationship {
+  id        String   @id @default(uuid())
+  label     String?  // 예: "스승과 제자", "친구"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mapId String
+  map   RelationshipMap @relation(fields: [mapId], references: [id], onDelete: Cascade)
+
+  fromId String
+  from   Person @relation("RelationshipFrom", fields: [fromId], references: [id], onDelete: Cascade)
+
+  toId String
+  to   Person @relation("RelationshipTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  // 같은 두 사람 사이에 같은 방향의 중복 관계가 생기지 않도록
+  @@unique([fromId, toId])
+}
