@@ -23,10 +23,10 @@ export default function PersonNode({ data }: { data: PersonNodeData }) {
   const { person, onClick } = data;
   const size = 80;
 
-  const bg = person ? COLOR_BG[person.color] ?? "#F1EFE8" : "#FFFFFF";
-  const textColor = person ? COLOR_TEXT[person.color] ?? "#2C2C2A" : "#9A9690";
+  const bg = person ? COLOR_BG[person.color] ?? "var(--bg-hover)" : "var(--bg-surface)";
+  const textColor = person ? COLOR_TEXT[person.color] ?? "var(--text-primary)" : "var(--text-tertiary)";
   // 테두리는 본문 텍스트 색이 아니라 항상 연한 회색 계열로 통일
-  const borderColor = person ? "rgba(0,0,0,0.10)" : "#E5E1D8";
+  const borderColor = person ? "var(--node-border-filled)" : "var(--node-border-empty)";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -81,9 +81,9 @@ export default function PersonNode({ data }: { data: PersonNodeData }) {
           style={{
             fontSize: 11,
             fontWeight: 500,
-            color: "#2C2C2A",
+            color: "var(--text-primary)",
             pointerEvents: "none",
-            background: "#FAF8F3",
+            background: "var(--bg-canvas)",
             padding: "1px 8px",
             borderRadius: 6,
           }}

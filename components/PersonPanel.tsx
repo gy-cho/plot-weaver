@@ -116,8 +116,8 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
         width: 360,
         height: "100vh",
         flexShrink: 0,
-        background: "#FFFFFF",
-        borderLeft: "1px solid #ECE8DF",
+        background: "var(--bg-surface)",
+        borderLeft: "1px solid var(--border-default)",
         display: "flex",
         flexDirection: "column",
         position: "relative",
@@ -131,7 +131,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
           alignItems: "center",
           gap: 8,
           padding: "16px 16px 12px",
-          borderBottom: "1px solid #ECE8DF",
+          borderBottom: "1px solid var(--border-default)",
         }}
       >
         {view !== "list" && (
@@ -151,7 +151,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
             }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 3.5L5.5 8L10 12.5" stroke="#2C2C2A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 3.5L5.5 8L10 12.5" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         )}
@@ -170,7 +170,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
             display: "flex",
             alignItems: "center",
             padding: 4,
-            color: "#9A9690",
+            color: "var(--text-tertiary)",
             fontSize: 16,
           }}
         >
@@ -189,9 +189,9 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                 fontSize: 13,
                 padding: "9px 12px",
                 borderRadius: 8,
-                border: "1px solid #2C2C2A",
-                background: "#2C2C2A",
-                color: "#fff",
+                border: "1px solid var(--accent)",
+                background: "var(--accent)",
+                color: "var(--accent-text)",
                 cursor: "pointer",
                 marginBottom: 14,
               }}
@@ -200,7 +200,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
             </button>
 
             {persons.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#6B6760" }}>등록된 인물이 없습니다.</p>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>등록된 인물이 없습니다.</p>
             ) : (
               persons.map((p) => (
                 <div
@@ -211,13 +211,13 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                     alignItems: "center",
                     gap: 10,
                     padding: "10px 10px",
-                    border: "1px solid #ECE8DF",
+                    border: "1px solid var(--border-default)",
                     borderRadius: 10,
                     marginBottom: 8,
                     cursor: "pointer",
                     transition: "background 0.12s ease",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#FAF8F3")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-canvas)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <PersonAvatar person={p} size={34} fontSize={13} />
@@ -226,7 +226,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                     <p
                       style={{
                         fontSize: 12,
-                        color: "#6B6760",
+                        color: "var(--text-secondary)",
                         margin: 0,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -246,8 +246,9 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                       fontSize: 12,
                       padding: "4px 8px",
                       borderRadius: 6,
-                      border: "1px solid #D8D4CC",
-                      background: "#fff",
+                      border: "1px solid var(--border-strong)",
+                      background: "var(--bg-surface)",
+                      color: "var(--text-primary)",
                       cursor: "pointer",
                       flexShrink: 0,
                     }}
@@ -262,12 +263,12 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
 
         {view === "form" && (
           <>
-            <p style={{ fontSize: 13, color: "#6B6760", margin: "0 0 6px" }}>프로필 사진</p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>프로필 사진</p>
             <div style={{ marginBottom: 16 }}>
               <ImageUploadField value={imageUrl} onChange={setImageUrl} />
             </div>
 
-            <p style={{ fontSize: 13, color: "#6B6760", margin: "0 0 6px" }}>프로필 색상</p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>프로필 색상</p>
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
               {PERSON_COLORS.map((c) => (
                 <div
@@ -285,7 +286,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
               ))}
             </div>
 
-            <p style={{ fontSize: 13, color: "#6B6760", margin: "0 0 6px" }}>이름</p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>이름</p>
             <input
               type="text"
               value={name}
@@ -295,14 +296,14 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                 width: "100%",
                 padding: "8px 10px",
                 borderRadius: 8,
-                border: "1px solid #D8D4CC",
+                border: "1px solid var(--border-strong)",
                 fontSize: 14,
                 marginBottom: 14,
                 boxSizing: "border-box",
               }}
             />
 
-            <p style={{ fontSize: 13, color: "#6B6760", margin: "0 0 6px" }}>상세 설명</p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>상세 설명</p>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -312,7 +313,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                 width: "100%",
                 padding: "8px 10px",
                 borderRadius: 8,
-                border: "1px solid #D8D4CC",
+                border: "1px solid var(--border-strong)",
                 fontSize: 14,
                 resize: "vertical",
                 boxSizing: "border-box",
@@ -328,9 +329,9 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                   fontSize: 13,
                   padding: "8px 16px",
                   borderRadius: 8,
-                  border: "1px solid #2C2C2A",
-                  background: name.trim() ? "#2C2C2A" : "#B8B4AC",
-                  color: "#fff",
+                  border: "1px solid var(--accent)",
+                  background: name.trim() ? "var(--accent)" : "var(--text-tertiary)",
+                  color: "var(--accent-text)",
                   cursor: name.trim() ? "pointer" : "not-allowed",
                 }}
               >
@@ -343,9 +344,9 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                     fontSize: 13,
                     padding: "8px 16px",
                     borderRadius: 8,
-                    border: "1px solid #E3B8B8",
-                    background: "#fff",
-                    color: "#A33B3B",
+                    border: "1px solid var(--danger-border)",
+                    background: "var(--bg-surface)",
+                    color: "var(--danger)",
                     cursor: "pointer",
                   }}
                 >
@@ -359,7 +360,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
         {view === "detail" && (
           <>
             {detailLoading || !detail ? (
-              <p style={{ fontSize: 13, color: "#6B6760" }}>불러오는 중...</p>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>불러오는 중...</p>
             ) : (
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
@@ -370,7 +371,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                       onClick={() => startEdit(detail)}
                       style={{
                         fontSize: 12,
-                        color: "#6B6760",
+                        color: "var(--text-secondary)",
                         background: "none",
                         border: "none",
                         padding: 0,
@@ -383,15 +384,15 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                   </div>
                 </div>
 
-                <div style={{ borderTop: "1px solid #ECE8DF", paddingTop: 12, marginBottom: 12 }}>
-                  <p style={{ fontSize: 11, color: "#9A9690", margin: "0 0 6px" }}>상세 설명</p>
+                <div style={{ borderTop: "1px solid var(--border-default)", paddingTop: 12, marginBottom: 12 }}>
+                  <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "0 0 6px" }}>상세 설명</p>
                   <p style={{ fontSize: 13, margin: 0, lineHeight: 1.7 }}>
                     {detail.description || "등록된 설명이 없습니다."}
                   </p>
                 </div>
 
-                <div style={{ borderTop: "1px solid #ECE8DF", paddingTop: 12 }}>
-                  <p style={{ fontSize: 11, color: "#9A9690", margin: "0 0 10px" }}>
+                <div style={{ borderTop: "1px solid var(--border-default)", paddingTop: 12 }}>
+                  <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "0 0 10px" }}>
                     연결된 관계 (
                     {detail.relationshipsFrom.length + detail.relationshipsTo.length})
                   </p>
@@ -406,13 +407,13 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                           alignItems: "center",
                           gap: 10,
                           padding: "9px 10px",
-                          border: "1px solid #ECE8DF",
+                          border: "1px solid var(--border-default)",
                           borderRadius: 8,
                           marginBottom: 8,
                           cursor: "pointer",
                           transition: "background 0.12s ease",
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#FAF8F3")}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-canvas)")}
                         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                       >
                         <PersonAvatar person={other} size={28} fontSize={11} />
@@ -423,8 +424,8 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                               style={{
                                 fontSize: 11,
                                 display: "inline-block",
-                                background: "#FAEEDA",
-                                color: "#412402",
+                                background: "var(--badge-bg)",
+                                color: "var(--badge-text)",
                                 padding: "1px 7px",
                                 borderRadius: 6,
                                 marginTop: 2,
@@ -433,7 +434,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                               {rel.label}
                             </span>
                           ) : (
-                            <p style={{ fontSize: 11, color: "#9A9690", margin: "2px 0 0" }}>
+                            <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "2px 0 0" }}>
                               관계: 미설정
                             </p>
                           )}
@@ -441,7 +442,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                       </div>
                     ))}
                   {detail.relationshipsFrom.length + detail.relationshipsTo.length === 0 && (
-                    <p style={{ fontSize: 13, color: "#6B6760" }}>아직 연결된 관계가 없습니다.</p>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>아직 연결된 관계가 없습니다.</p>
                   )}
                 </div>
               </>

@@ -34,10 +34,10 @@ export default function MapContextMenu({ x, y, items, onClose }: Props) {
           top: y,
           left: x,
           zIndex: 41,
-          background: "#fff",
-          border: "1px solid #ECE8DF",
+          background: "var(--bg-surface)",
+          border: "1px solid var(--border-default)",
           borderRadius: 8,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+          boxShadow: "0 8px 24px var(--shadow-color-strong)",
           padding: 4,
           minWidth: 160,
         }}
@@ -60,10 +60,10 @@ export default function MapContextMenu({ x, y, items, onClose }: Props) {
               background: "transparent",
               cursor: "pointer",
               fontSize: 13,
-              color: item.danger ? "#A33B3B" : "#2C2C2A",
+              color: item.danger ? "var(--danger)" : "var(--text-primary)",
               textAlign: "left",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = item.danger ? "#FCEBEB" : "#F1EFE8")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = item.danger ? "var(--danger-bg-hover)" : "var(--bg-hover)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
             {item.label === "노드 추가" && (
@@ -72,7 +72,7 @@ export default function MapContextMenu({ x, y, items, onClose }: Props) {
                 <line x1="2.5" y1="8" x2="13.5" y2="8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
             )}
-            {item.label === "인물 등록" && (
+            {(item.label === "인물 등록" || item.label === "인물 변경") && (
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <circle cx="8" cy="5.5" r="2.4" stroke="currentColor" strokeWidth="1.2" />
                 <path

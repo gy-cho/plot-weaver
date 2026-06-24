@@ -28,6 +28,7 @@ import PersonPanel from "@/components/PersonPanel";
 import { useToast } from "@/components/ToastProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { useAuth } from "@/components/AuthProvider";
+import { useTheme } from "@/components/ThemeProvider";
 import type { Person, Relationship } from "@/types";
 
 const nodeTypes = { personNode: PersonNode };
@@ -75,12 +76,32 @@ function MapPageInner() {
   const mapId = searchParams.get("mapId");
 
   const { user, loading: authLoading } = useAuth();
+  const { theme } = useTheme();
   const { showToast } = useToast();
   const confirm = useConfirm();
   const [persons, setPersons] = useState<Person[]>([]);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [slots, setSlots] = useState<NodeSlot[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // React Flow는 SVG 속성(stroke, fill)에 CSS 변수 문자열을 직접 못 쓰므로,
+  // 실제 색상값을 테마에 따라 직접 정의합니다.
+  // (getComputedStyle로 DOM에서 읽어오는 방식은 브라우저의 스타일 재계산 타이밍과
+  //  경쟁 상태가 생겨, 테마 전환 직후 옛 값을 읽어버리는 문제가 있었습니다.)
+  // → 나중에 CI 색상이 정해지면 globals.css와 이 두 객체를 함께 맞춰주면 됩니다.
+  const LIGHT_EDGE_COLORS = {
+    stroke: "#6B6760",
+    labelFill: "#6B6760",
+    labelBg: "#FAF8F3",
+    grid: "#ECE7DC",
+  };
+  const DARK_EDGE_COLORS = {
+    stroke: "#B0ABA0",
+    labelFill: "#B0ABA0",
+    labelBg: "#25241F",
+    grid: "#2A2922",
+  };
+  const edgeColors = theme === "dark" ? DARK_EDGE_COLORS : LIGHT_EDGE_COLORS;
 
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
   const [showSelectModal, setShowSelectModal] = useState(false);
@@ -203,14 +224,27 @@ function MapPageInner() {
     setActiveSlotId(newSlot.id);
   }, [contextMenu]);
 
-  // 특정 노드에 인물을 등록(배정)하려는 요청 — 등록된 인물이 있으면 선택 모달을,
-  // 없으면 안내 토스트와 함께 인물 등록 패널을 띄웁니다. (빈 노드 패널 버튼과 노드 우클릭 메뉴에서 공통으로 사용)
+  // 특정 노드에 인물을 등록/변경하려는 요청 — 이미 어떤 노드에든 배정된 인물은 선택할 수 없으므로
+  // (변경의 경우 "다른" 인물로 바꾸는 것이 목적이라 현재 배정된 인물 자신도 후보에서 제외합니다),
+  // 실제로 "배정 가능한 인물"이 있는지를 기준으로 분기합니다.
+  // 가능한 인물이 있으면 선택 모달을, 없으면 안내 토스트와 함께 인물 등록 패널을 띄웁니다.
   const requestAssignPerson = useCallback(
     (slotId: string) => {
       setActiveSlotId(slotId);
       setActiveEdgeId(null);
-      if (persons.length === 0) {
-        showToast("info", "등록된 인물이 없습니다. 인물을 먼저 등록해주세요.");
+
+      const placedIds = new Set(
+        slots.map((s) => s.personId).filter((id): id is string => !!id)
+      );
+      const assignable = persons.filter((p) => !placedIds.has(p.id));
+
+      if (assignable.length === 0) {
+        showToast(
+          "info",
+          persons.length === 0
+            ? "등록된 인물이 없습니다. 인물을 먼저 등록해주세요."
+            : "배정 가능한 인물이 없습니다. 새 인물을 등록해주세요."
+        );
         setPanelDetailId(null);
         setShowPersonPanel(true);
         return;
@@ -218,7 +252,7 @@ function MapPageInner() {
       setSelectModalMode("assign");
       setShowSelectModal(true);
     },
-    [persons, showToast]
+    [persons, slots, showToast]
   );
 
   // 빈 노드에 기존 인물 배정, 또는 등록된 인물에 새 관계 연결
@@ -417,17 +451,17 @@ function MapPageInner() {
           target: toSlot.id,
           type: "centerToCenter",
           label: r.label || "",
-          style: { stroke: "#D8D4CC", strokeWidth: 1 },
-          labelStyle: { fontSize: 11, fill: "#6B6760" },
-          labelBgStyle: { fill: "#FAF8F3" },
+          style: { stroke: edgeColors.stroke, strokeWidth: 1 },
+          labelStyle: { fontSize: 11, fill: edgeColors.labelFill },
+          labelBgStyle: { fill: edgeColors.labelBg },
         } as Edge;
       })
       .filter((e): e is Edge => e !== null);
-  }, [relationships, slots]);
+  }, [relationships, slots, edgeColors]);
 
   if (authLoading || !user) {
     return (
-      <div style={{ padding: 40, fontSize: 14, color: "#6B6760" }}>불러오는 중...</div>
+      <div style={{ padding: 40, fontSize: 14, color: "var(--text-secondary)" }}>불러오는 중...</div>
     );
   }
 
@@ -456,7 +490,7 @@ function MapPageInner() {
         />
       )}
 
-      <div style={{ flex: 1, height: "100vh", position: "relative", background: "#FAF8F3" }}>
+      <div style={{ flex: 1, height: "100vh", position: "relative", background: "var(--bg-canvas)" }}>
         {!mapId ? (
           // 관계도가 선택되지 않은 상태 — 다른 페이지로 보내지 않고 같은 화면에서 안내합니다.
           <div
@@ -469,7 +503,7 @@ function MapPageInner() {
               gap: 14,
             }}
           >
-            <p style={{ fontSize: 14, color: "#6B6760", margin: 0 }}>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>
               아직 선택된 관계도가 없습니다.
             </p>
             <button
@@ -478,9 +512,9 @@ function MapPageInner() {
                 fontSize: 13,
                 padding: "8px 16px",
                 borderRadius: 8,
-                border: "1px solid #2C2C2A",
-                background: "#2C2C2A",
-                color: "#fff",
+                border: "1px solid var(--accent)",
+                background: "var(--accent)",
+                color: "var(--accent-text)",
                 cursor: "pointer",
               }}
             >
@@ -495,7 +529,7 @@ function MapPageInner() {
               alignItems: "center",
               justifyContent: "center",
               fontSize: 14,
-              color: "#6B6760",
+              color: "var(--text-secondary)",
             }}
           >
             관계도를 불러오는 중...
@@ -519,7 +553,7 @@ function MapPageInner() {
               }}
               fitView
             >
-              <Background color="#E5E1D8" gap={20} />
+              <Background key={theme} color={edgeColors.grid} gap={20} size={1} />
               <Controls position="bottom-right" />
             </ReactFlow>
 
@@ -588,7 +622,9 @@ function MapPageInner() {
                 y={contextMenu.y}
                 items={[
                   {
-                    label: "인물 등록",
+                    label: slots.find((s) => s.id === contextMenu.slotId)?.personId
+                      ? "인물 변경"
+                      : "인물 등록",
                     onClick: () => requestAssignPerson(contextMenu.slotId),
                   },
                   {
@@ -620,7 +656,7 @@ function MapPageInner() {
 export default function MapPage() {
   return (
     <Suspense
-      fallback={<div style={{ padding: 40, fontSize: 14, color: "#6B6760" }}>불러오는 중...</div>}
+      fallback={<div style={{ padding: 40, fontSize: 14, color: "var(--text-secondary)" }}>불러오는 중...</div>}
     >
       <ReactFlowProvider>
         <MapPageInner />

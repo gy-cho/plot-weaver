@@ -107,8 +107,8 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
         width: 300,
         height: "100vh",
         flexShrink: 0,
-        background: "#FFFFFF",
-        borderRight: "1px solid #ECE8DF",
+        background: "var(--bg-surface)",
+        borderRight: "1px solid var(--border-default)",
         display: "flex",
         flexDirection: "column",
         position: "relative",
@@ -135,11 +135,11 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
             display: "flex",
             alignItems: "center",
             padding: 4,
-            color: "#9A9690",
+            color: "var(--text-tertiary)",
           }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 2L14 14M14 2L2 14" stroke="#9A9690" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M2 2L14 14M14 2L2 14" stroke="var(--text-tertiary)" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
         </button>
       </div>
@@ -154,8 +154,8 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
             fill="none"
             style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}
           >
-            <circle cx="7" cy="7" r="5" stroke="#9A9690" strokeWidth="1.3" />
-            <line x1="10.8" y1="10.8" x2="14" y2="14" stroke="#9A9690" strokeWidth="1.3" strokeLinecap="round" />
+            <circle cx="7" cy="7" r="5" stroke="var(--text-tertiary)" strokeWidth="1.3" />
+            <line x1="10.8" y1="10.8" x2="14" y2="14" stroke="var(--text-tertiary)" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
           <input
             type="text"
@@ -166,10 +166,10 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
               width: "100%",
               padding: "8px 10px 8px 30px",
               borderRadius: 8,
-              border: "1px solid #ECE8DF",
+              border: "1px solid var(--border-default)",
               fontSize: 13,
               boxSizing: "border-box",
-              background: "#FAF8F3",
+              background: "var(--bg-canvas)",
             }}
           />
         </div>
@@ -184,8 +184,9 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
             fontSize: 13,
             padding: "8px 12px",
             borderRadius: 8,
-            border: "1px solid #D8D4CC",
-            background: "#fff",
+            border: "1px solid var(--border-strong)",
+            background: "var(--bg-surface)",
+            color: "var(--text-primary)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -194,8 +195,8 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
           }}
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <line x1="8" y1="2.5" x2="8" y2="13.5" stroke="#2C2C2A" strokeWidth="1.4" strokeLinecap="round" />
-            <line x1="2.5" y1="8" x2="13.5" y2="8" stroke="#2C2C2A" strokeWidth="1.4" strokeLinecap="round" />
+            <line x1="8" y1="2.5" x2="8" y2="13.5" stroke="var(--text-primary)" strokeWidth="1.4" strokeLinecap="round" />
+            <line x1="2.5" y1="8" x2="13.5" y2="8" stroke="var(--text-primary)" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           새 관계도
         </button>
@@ -204,9 +205,9 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
       {/* 목록 */}
       <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 16px" }}>
         {loading ? (
-          <p style={{ fontSize: 13, color: "#6B6760", padding: "0 8px" }}>불러오는 중...</p>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", padding: "0 8px" }}>불러오는 중...</p>
         ) : filteredMaps.length === 0 ? (
-          <p style={{ fontSize: 13, color: "#6B6760", padding: "0 8px" }}>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", padding: "0 8px" }}>
             {query ? "검색 결과가 없습니다." : "아직 만든 관계도가 없습니다."}
           </p>
         ) : (
@@ -222,10 +223,10 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                 borderRadius: 8,
                 marginBottom: 2,
                 cursor: "pointer",
-                background: activeMapId === m.id ? "#F1EFE8" : "transparent",
+                background: activeMapId === m.id ? "var(--bg-hover)" : "transparent",
               }}
               onMouseEnter={(e) => {
-                if (activeMapId !== m.id) e.currentTarget.style.background = "#FAF8F3";
+                if (activeMapId !== m.id) e.currentTarget.style.background = "var(--bg-canvas)";
               }}
               onMouseLeave={(e) => {
                 if (activeMapId !== m.id) e.currentTarget.style.background = "transparent";
@@ -249,7 +250,7 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                       fontSize: 14,
                       padding: "3px 6px",
                       borderRadius: 6,
-                      border: "1px solid #2C2C2A",
+                      border: "1px solid var(--text-primary)",
                       boxSizing: "border-box",
                     }}
                   />
@@ -260,7 +261,7 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                         fontWeight: 500,
                         fontSize: 14,
                         margin: 0,
-                        color: "#2C2C2A",
+                        color: "var(--text-primary)",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -268,7 +269,7 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                     >
                       {m.title}
                     </p>
-                    <p style={{ fontSize: 11, color: "#9A9690", margin: "2px 0 0" }}>
+                    <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "2px 0 0" }}>
                       인물 {m._count.persons}명
                     </p>
                   </>
@@ -283,7 +284,7 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                     background: "transparent",
                     cursor: "pointer",
                     padding: 4,
-                    color: "#B8B4AC",
+                    color: "var(--text-tertiary)",
                     flexShrink: 0,
                   }}
                 >
@@ -306,7 +307,7 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                   background: "transparent",
                   cursor: "pointer",
                   padding: 4,
-                  color: "#B8B4AC",
+                  color: "var(--text-tertiary)",
                   flexShrink: 0,
                 }}
               >

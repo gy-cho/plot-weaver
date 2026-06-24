@@ -54,8 +54,8 @@ export default function ImageUploadField({ value, onChange }: Props) {
               width: 56,
               height: 56,
               borderRadius: "50%",
-              background: "#F1EFE8",
-              border: "1px dashed #D8D4CC",
+              background: "var(--bg-hover)",
+              border: "1px dashed var(--border-strong)",
             }}
           />
         )}
@@ -68,8 +68,9 @@ export default function ImageUploadField({ value, onChange }: Props) {
               fontSize: 13,
               padding: "6px 12px",
               borderRadius: 8,
-              border: "1px solid #D8D4CC",
-              background: "#fff",
+              border: "1px solid var(--border-strong)",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
               cursor: uploading ? "default" : "pointer",
             }}
           >
@@ -83,8 +84,9 @@ export default function ImageUploadField({ value, onChange }: Props) {
                 fontSize: 13,
                 padding: "6px 12px",
                 borderRadius: 8,
-                border: "1px solid #D8D4CC",
-                background: "#fff",
+                border: "1px solid var(--border-strong)",
+                background: "var(--bg-surface)",
+                color: "var(--text-primary)",
                 cursor: "pointer",
               }}
             >
@@ -100,7 +102,7 @@ export default function ImageUploadField({ value, onChange }: Props) {
         onChange={handleFileSelect}
         style={{ display: "none" }}
       />
-      {error && <p style={{ fontSize: 12, color: "#A33B3B", margin: "4px 0 0" }}>{error}</p>}
+      {error && <p style={{ fontSize: 12, color: "var(--danger)", margin: "4px 0 0" }}>{error}</p>}
     </div>
   );
 }

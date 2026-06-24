@@ -29,18 +29,18 @@ export default function PersonSelectModal({ persons, excludeIds, onSelect, onClo
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff",
+          background: "var(--bg-surface)",
           borderRadius: 12,
           padding: 20,
           width: 360,
           maxHeight: "70vh",
           overflowY: "auto",
-          boxShadow: "0 12px 32px rgba(0,0,0,0.16)",
+          boxShadow: "0 12px 32px var(--shadow-color-strong)",
         }}
       >
         <h3 style={{ margin: "0 0 12px", fontSize: 16 }}>등록된 인물 선택</h3>
         {available.length === 0 ? (
-          <p style={{ fontSize: 13, color: "#6B6760" }}>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
             선택 가능한 인물이 없습니다. 먼저 인물을 등록해주세요.
           </p>
         ) : (
@@ -53,7 +53,7 @@ export default function PersonSelectModal({ persons, excludeIds, onSelect, onClo
                 alignItems: "center",
                 gap: 10,
                 padding: "10px 12px",
-                border: "1px solid #ECE8DF",
+                border: "1px solid var(--border-default)",
                 borderRadius: 8,
                 marginBottom: 8,
                 cursor: "pointer",
@@ -65,7 +65,7 @@ export default function PersonSelectModal({ persons, excludeIds, onSelect, onClo
                 <p
                   style={{
                     fontSize: 12,
-                    color: "#6B6760",
+                    color: "var(--text-secondary)",
                     margin: 0,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -85,8 +85,9 @@ export default function PersonSelectModal({ persons, excludeIds, onSelect, onClo
             fontSize: 13,
             padding: "6px 12px",
             borderRadius: 8,
-            border: "1px solid #D8D4CC",
-            background: "#fff",
+            border: "1px solid var(--border-strong)",
+            background: "var(--bg-surface)",
+            color: "var(--text-primary)",
             cursor: "pointer",
             width: "100%",
           }}

@@ -1,3 +1,6 @@
+// ============================================
+// 파일 경로: components/EdgeLabelModal.tsx
+// ============================================
 "use client";
 
 import { useState } from "react";
@@ -27,7 +30,7 @@ export default function EdgeLabelModal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.3)",
+        background: "var(--bg-overlay)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -38,19 +41,19 @@ export default function EdgeLabelModal({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff",
+          background: "var(--bg-surface)",
           borderRadius: 12,
           padding: 20,
           width: 360,
-          boxShadow: "0 12px 32px rgba(0,0,0,0.16)",
+          boxShadow: "0 12px 32px var(--shadow-color-strong)",
         }}
       >
-        <h3 style={{ margin: "0 0 6px", fontSize: 16 }}>관계 편집</h3>
-        <p style={{ fontSize: 13, color: "#6B6760", margin: "0 0 14px" }}>
+        <h3 style={{ margin: "0 0 6px", fontSize: 16, color: "var(--text-primary)" }}>관계 편집</h3>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 14px" }}>
           {fromPerson?.name ?? "빈 노드"} ↔ {toPerson?.name ?? "빈 노드"}
         </p>
 
-        <label style={{ fontSize: 13, color: "#6B6760", display: "block", marginBottom: 4 }}>
+        <label style={{ fontSize: 13, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
           관계 설명
         </label>
         <input
@@ -63,7 +66,9 @@ export default function EdgeLabelModal({
             width: "100%",
             padding: "8px 10px",
             borderRadius: 8,
-            border: "1px solid #D8D4CC",
+            border: "1px solid var(--border-strong)",
+            background: "var(--bg-input)",
+            color: "var(--text-primary)",
             fontSize: 14,
             boxSizing: "border-box",
           }}
@@ -76,9 +81,9 @@ export default function EdgeLabelModal({
               fontSize: 13,
               padding: "6px 14px",
               borderRadius: 8,
-              border: "1px solid #2C2C2A",
-              background: "#2C2C2A",
-              color: "#fff",
+              border: "1px solid var(--accent)",
+              background: "var(--accent)",
+              color: "var(--accent-text)",
               cursor: "pointer",
             }}
           >
@@ -90,9 +95,9 @@ export default function EdgeLabelModal({
               fontSize: 13,
               padding: "6px 14px",
               borderRadius: 8,
-              border: "1px solid #E3B8B8",
-              background: "#fff",
-              color: "#A33B3B",
+              border: "1px solid var(--danger-border)",
+              background: "var(--bg-surface)",
+              color: "var(--danger)",
               cursor: "pointer",
             }}
           >
@@ -104,8 +109,9 @@ export default function EdgeLabelModal({
               fontSize: 13,
               padding: "6px 14px",
               borderRadius: 8,
-              border: "1px solid #D8D4CC",
-              background: "#fff",
+              border: "1px solid var(--border-strong)",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
               cursor: "pointer",
               marginLeft: "auto",
             }}

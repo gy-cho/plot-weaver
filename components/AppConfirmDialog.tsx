@@ -1,3 +1,6 @@
+// ============================================
+// 파일 경로: components/AppConfirmDialog.tsx
+// ============================================
 "use client";
 
 import { useConfirmDialogState } from "@/components/ConfirmProvider";
@@ -12,7 +15,7 @@ export default function AppConfirmDialog() {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.3)",
+        background: "var(--bg-overlay)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -23,17 +26,17 @@ export default function AppConfirmDialog() {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff",
+          background: "var(--bg-surface)",
           borderRadius: 12,
           padding: 20,
           width: 340,
-          boxShadow: "0 12px 32px rgba(0,0,0,0.16)",
+          boxShadow: "0 12px 32px var(--shadow-color-strong)",
         }}
       >
         {state.title && (
-          <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600 }}>{state.title}</h3>
+          <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{state.title}</h3>
         )}
-        <p style={{ fontSize: 14, color: "#3A3A3A", margin: "0 0 18px", lineHeight: 1.6 }}>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 18px", lineHeight: 1.6 }}>
           {state.message}
         </p>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -43,8 +46,9 @@ export default function AppConfirmDialog() {
               fontSize: 13,
               padding: "7px 14px",
               borderRadius: 8,
-              border: "1px solid #D8D4CC",
-              background: "#fff",
+              border: "1px solid var(--border-strong)",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
               cursor: "pointer",
             }}
           >
@@ -56,9 +60,9 @@ export default function AppConfirmDialog() {
               fontSize: 13,
               padding: "7px 14px",
               borderRadius: 8,
-              border: state.danger ? "1px solid #ff4444" : "1px solid #2C2C2A",
-              background: state.danger ? "#ff4444" : "#2C2C2A",
-              color: "#fff",
+              border: state.danger ? "1px solid #ff4444" : "1px solid var(--accent)",
+              background: state.danger ? "#ff4444" : "var(--accent)",
+              color: state.danger ? "#fff" : "var(--accent-text)",
               cursor: "pointer",
             }}
           >

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { ConfirmProvider } from "@/components/ConfirmProvider";
@@ -33,16 +34,18 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          <ToastProvider>
-            <ConfirmProvider>
-              {children}
-              {/* 토스트와 확인 모달은 항상 최상단에 떠 있어야 하므로 레이아웃에 직접 둡니다 */}
-              <AppToast />
-              <AppConfirmDialog />
-            </ConfirmProvider>
-          </ToastProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <ConfirmProvider>
+                {children}
+                {/* 토스트와 확인 모달은 항상 최상단에 떠 있어야 하므로 레이아웃에 직접 둡니다 */}
+                <AppToast />
+                <AppConfirmDialog />
+              </ConfirmProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,7 +1,3 @@
-// ============================================
-// 파일 경로: app/login/page.tsx
-// (프로젝트 루트의 app 폴더 -> login 폴더 -> page.tsx)
-// ============================================
 "use client";
 
 import { useState } from "react";
@@ -45,27 +41,27 @@ export default function LoginPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#FAF8F3",
+        background: "var(--bg-canvas)",
       }}
     >
       <div
         style={{
           width: 360,
-          background: "#fff",
+          background: "var(--bg-surface)",
           borderRadius: 14,
-          border: "1px solid #ECE8DF",
+          border: "1px solid var(--border-default)",
           padding: "32px 28px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+          boxShadow: "0 8px 24px var(--shadow-color)",
         }}
       >
-        <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 4px", color: "#2C2C2A" }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 4px", color: "var(--text-primary)" }}>
           Plot Weaver
         </h1>
-        <p style={{ fontSize: 13, color: "#6B6760", margin: "0 0 24px" }}>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 24px" }}>
           {mode === "login" ? "로그인하고 내 관계도를 관리하세요." : "계정을 만들고 관계도를 시작하세요."}
         </p>
 
-        <label style={{ fontSize: 13, color: "#6B6760", display: "block", marginBottom: 4 }}>
+        <label style={{ fontSize: 13, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
           이메일
         </label>
         <input
@@ -77,14 +73,14 @@ export default function LoginPage() {
             width: "100%",
             padding: "9px 11px",
             borderRadius: 8,
-            border: "1px solid #D8D4CC",
+            border: "1px solid var(--border-strong)",
             fontSize: 14,
             marginBottom: 14,
             boxSizing: "border-box",
           }}
         />
 
-        <label style={{ fontSize: 13, color: "#6B6760", display: "block", marginBottom: 4 }}>
+        <label style={{ fontSize: 13, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
           비밀번호
         </label>
         <input
@@ -97,7 +93,7 @@ export default function LoginPage() {
             width: "100%",
             padding: "9px 11px",
             borderRadius: 8,
-            border: "1px solid #D8D4CC",
+            border: "1px solid var(--border-strong)",
             fontSize: 14,
             marginBottom: 8,
             boxSizing: "border-box",
@@ -105,7 +101,7 @@ export default function LoginPage() {
         />
 
         {error && (
-          <p style={{ fontSize: 12, color: "#A33B3B", margin: "0 0 12px" }}>{error}</p>
+          <p style={{ fontSize: 12, color: "var(--danger)", margin: "0 0 12px" }}>{error}</p>
         )}
 
         <button
@@ -115,9 +111,9 @@ export default function LoginPage() {
             width: "100%",
             padding: "10px 0",
             borderRadius: 8,
-            border: "1px solid #2C2C2A",
-            background: "#2C2C2A",
-            color: "#fff",
+            border: "1px solid var(--accent)",
+            background: "var(--accent)",
+            color: "var(--accent-text)",
             fontSize: 14,
             cursor: submitting ? "default" : "pointer",
             marginTop: 8,
@@ -126,18 +122,17 @@ export default function LoginPage() {
           {submitting ? "처리 중..." : mode === "login" ? "로그인" : "회원가입"}
         </button>
 
-        <p style={{ fontSize: 13, color: "#6B6760", textAlign: "center", marginTop: 16 }}>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", textAlign: "center", marginTop: 16 }}>
           {mode === "login" ? "계정이 없으신가요? " : "이미 계정이 있으신가요? "}
           <button
             onClick={() => {
-                console.log('clicked'); 
               setMode(mode === "login" ? "signup" : "login");
               setError(null);
             }}
             style={{
               background: "none",
               border: "none",
-              color: "#2C2C2A",
+              color: "var(--text-primary)",
               textDecoration: "underline",
               cursor: "pointer",
               fontSize: 13,
