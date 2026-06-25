@@ -241,7 +241,7 @@ export default function PersonDetailView({
           관계도로 돌아가기
         </button>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {isEditing ? (
             <>
               {dirty && (
@@ -255,19 +255,21 @@ export default function PersonDetailView({
                   aria-label="취소"
                   title="취소"
                   style={{
-                    width: 34,
-                    height: 34,
+                    width: 32,
+                    height: 32,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     borderRadius: 8,
-                    border: "1px solid var(--border-strong)",
-                    background: "var(--bg-surface)",
-                    color: "var(--text-primary)",
+                    border: "none",
+                    background: "transparent",
+                    color: "var(--text-secondary)",
                     cursor: "pointer",
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
                     <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </button>
@@ -295,23 +297,25 @@ export default function PersonDetailView({
                   aria-label="저장"
                   title="저장"
                   style={{
-                    width: 34,
-                    height: 34,
+                    width: 32,
+                    height: 32,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     borderRadius: 8,
-                    border: dirty ? "1px solid var(--accent)" : "1px solid var(--border-default)",
-                    background: dirty ? "var(--accent)" : "transparent",
-                    color: dirty ? "var(--accent-text)" : "var(--text-tertiary)",
+                    border: "none",
+                    background: "transparent",
+                    color: dirty ? "var(--accent)" : "var(--text-tertiary)",
                     cursor: dirty ? "pointer" : "default",
                   }}
+                  onMouseEnter={(e) => dirty && (e.currentTarget.style.background = "var(--bg-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
                     <path
                       d="M3 8.5L6.2 11.7L13 4"
                       stroke="currentColor"
-                      strokeWidth="1.6"
+                      strokeWidth="1.8"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -326,17 +330,19 @@ export default function PersonDetailView({
                 aria-label="삭제"
                 title="삭제"
                 style={{
-                  width: 34,
-                  height: 34,
+                  width: 32,
+                  height: 32,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: 8,
-                  border: "1px solid var(--danger-border)",
-                  background: "var(--bg-surface)",
+                  border: "none",
+                  background: "transparent",
                   color: "var(--danger)",
                   cursor: "pointer",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--danger-bg-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path
@@ -353,19 +359,21 @@ export default function PersonDetailView({
                 aria-label="편집"
                 title="편집"
                 style={{
-                  width: 34,
-                  height: 34,
+                  width: 32,
+                  height: 32,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: 8,
-                  border: "1px solid var(--accent)",
-                  background: "var(--accent)",
-                  color: "var(--accent-text)",
+                  border: "none",
+                  background: "transparent",
+                  color: "var(--accent)",
                   cursor: "pointer",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
-                <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path
                     d="M11 2.5L13.5 5L5 13.5H2.5V11L11 2.5Z"
                     stroke="currentColor"

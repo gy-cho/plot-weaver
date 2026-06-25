@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import type { Person, PersonField, Relationship } from "@/types";
 import PersonAvatar from "@/components/PersonAvatar";
 import PersonQuickCreateModal from "@/components/PersonQuickCreateModal";
+import ImageUploadField from "@/components/ImageUploadField";
 import { useToast } from "@/components/ToastProvider";
 
 type View = "list" | "detail";
@@ -37,8 +38,11 @@ export default function PersonPanel({ storybookId, persons, onPersonsChange, onC
   const [detailLoading, setDetailLoading] = useState(false);
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(false);
 
-  // 기본정보 인라인 편집용 상태
+  // 기본정보 인라인 편집용 상태 (이름, 사진, 기본정보 필드를 함께 다룹니다)
   const [editingBasic, setEditingBasic] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
+  const [editOriginalImageUrl, setEditOriginalImageUrl] = useState<string | null>(null);
   const [basicFields, setBasicFields] = useState<PersonField[]>([]);
   const [savingBasic, setSavingBasic] = useState(false);
 
@@ -74,6 +78,9 @@ export default function PersonPanel({ storybookId, persons, onPersonsChange, onC
 
   const startEditBasic = () => {
     if (!detail) return;
+    setEditName(detail.name);
+    setEditImageUrl(detail.imageUrl);
+    setEditOriginalImageUrl(detail.originalImageUrl);
     setBasicFields(basicFieldsOf(detail).map((f) => ({ ...f })));
     setEditingBasic(true);
   };
@@ -84,6 +91,10 @@ export default function PersonPanel({ storybookId, persons, onPersonsChange, onC
 
   const saveBasicFields = async () => {
     if (!detail) return;
+    if (!editName.trim()) {
+      showToast("error", "이름은 비워둘 수 없습니다.");
+      return;
+    }
     setSavingBasic(true);
     const otherFields = detail.customFields?.filter((f) => f.tab !== "basic") ?? [];
     const merged = [...basicFields, ...otherFields];
@@ -91,7 +102,12 @@ export default function PersonPanel({ storybookId, persons, onPersonsChange, onC
     await fetch(`/api/persons/${detail.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customFields: merged }),
+      body: JSON.stringify({
+        name: editName.trim(),
+        imageUrl: editImageUrl,
+        originalImageUrl: editOriginalImageUrl,
+        customFields: merged,
+      }),
     });
     setSavingBasic(false);
     setEditingBasic(false);
@@ -233,32 +249,89 @@ export default function PersonPanel({ storybookId, persons, onPersonsChange, onC
               <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>불러오는 중...</p>
             ) : (
               <>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                  <PersonAvatar person={detail} size={48} fontSize={18} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: 500, fontSize: 16, margin: 0, color: "var(--text-primary)" }}>{detail.name}</p>
-                  </div>
-                  <button
-                    onClick={() => goFullView(detail.id)}
-                    style={{
-                      fontSize: 12,
-                      padding: "5px 10px",
-                      borderRadius: 6,
-                      border: "1px solid var(--border-strong)",
-                      background: "var(--bg-surface)",
-                      color: "var(--text-primary)",
-                      cursor: "pointer",
-                      flexShrink: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    전체보기
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                      <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
+                <div style={{ marginBottom: 16 }}>
+                  {editingBasic ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 4 }}>
+                      <ImageUploadField
+                        value={editImageUrl}
+                        onChange={(newImageUrl, newOriginalUrl) => {
+                          setEditImageUrl(newImageUrl);
+                          setEditOriginalImageUrl(newOriginalUrl);
+                        }}
+                      />
+                      <div>
+                        <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 3 }}>
+                          이름
+                        </label>
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          style={{
+                            width: "100%",
+                            padding: "7px 9px",
+                            borderRadius: 6,
+                            border: "1px solid var(--border-strong)",
+                            background: "var(--bg-input)",
+                            color: "var(--text-primary)",
+                            fontSize: 14,
+                            fontWeight: 500,
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <PersonAvatar person={detail} size={48} fontSize={18} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 500, fontSize: 16, margin: 0, color: "var(--text-primary)" }}>{detail.name}</p>
+                      </div>
+                      <button
+                        onClick={() => goFullView(detail.id)}
+                        aria-label="전체보기"
+                        title="전체보기"
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          color: "var(--text-tertiary)",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: 6,
+                          borderRadius: 6,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--bg-hover)";
+                          e.currentTarget.style.color = "var(--text-primary)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--text-tertiary)";
+                        }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                          <path
+                            d="M6.5 3H13V9.5"
+                            stroke="currentColor"
+                            strokeWidth="1.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path d="M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                          <path
+                            d="M3 8V13H8"
+                            stroke="currentColor"
+                            strokeWidth="1.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* 기본정보 — 보기/인라인 편집 겸용 */}
@@ -389,21 +462,16 @@ export default function PersonPanel({ storybookId, persons, onPersonsChange, onC
                   )}
 
                   {!editingBasic && (
-                    <button
-                      onClick={() => goFullView(detail.id)}
+                    <p
                       style={{
                         marginTop: 10,
                         fontSize: 12,
-                        color: "var(--text-secondary)",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                        textDecoration: "underline",
+                        color: "var(--text-tertiary)",
+                        margin: "10px 0 0",
                       }}
                     >
-                      상세정보 등 더 많은 정보는 전체보기에서
-                    </button>
+                      상세정보 등 더 많은 정보는 전체보기에서 확인할 수 있습니다.
+                    </p>
                   )}
                 </div>
 
