@@ -9,15 +9,21 @@ import { useAuth } from "@/components/AuthProvider";
 import { useTheme } from "@/components/ThemeProvider";
 
 type Props = {
-  onToggleMapList: () => void;
-  mapListOpen: boolean;
+  currentStorybookTitle: string | null;
+  onToggleStorybookList: () => void;
+  storybookListOpen: boolean;
+  onToggleMapView: () => void;
+  mapViewOpen: boolean;
   onTogglePersonList: () => void;
   personListOpen: boolean;
 };
 
 export default function Sidebar({
-  onToggleMapList,
-  mapListOpen,
+  currentStorybookTitle,
+  onToggleStorybookList,
+  storybookListOpen,
+  onToggleMapView,
+  mapViewOpen,
   onTogglePersonList,
   personListOpen,
 }: Props) {
@@ -27,6 +33,7 @@ export default function Sidebar({
   const [expanded, setExpanded] = useState(true);
 
   const width = expanded ? 256 : 60;
+  const hasStorybook = !!currentStorybookTitle;
 
   return (
     <div
@@ -83,10 +90,77 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* 메뉴 항목 */}
-      <nav style={{ flex: 1, padding: "4px 8px" }}>
+      {/* 현재 작업 중인 스토리북 — 클릭하면 스토리북 목록 패널이 열림 */}
+      <div style={{ padding: expanded ? "4px 8px 10px" : "4px 8px" }}>
         <button
-          onClick={onToggleMapList}
+          onClick={onToggleStorybookList}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: expanded ? "9px 10px" : "9px 0",
+            justifyContent: expanded ? "flex-start" : "center",
+            borderRadius: 8,
+            border: "1px solid var(--border-default)",
+            background: storybookListOpen ? "var(--bg-hover)" : "var(--bg-surface)",
+            cursor: "pointer",
+            fontSize: 13,
+            color: "var(--text-primary)",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = storybookListOpen ? "var(--bg-hover)" : "var(--bg-surface)")}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+            <path
+              d="M3 2.5H11.5C12.3 2.5 13 3.2 13 4V13.5H4.5C3.67 13.5 3 12.83 3 12V2.5Z"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              strokeLinejoin="round"
+            />
+            <line x1="3" y1="11.5" x2="13" y2="11.5" stroke="currentColor" strokeWidth="1.1" />
+          </svg>
+          {expanded && (
+            <span
+              style={{
+                flex: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                textAlign: "left",
+                fontWeight: 500,
+                color: hasStorybook ? "var(--text-primary)" : "var(--text-tertiary)",
+              }}
+            >
+              {currentStorybookTitle ?? "스토리북 선택"}
+            </span>
+          )}
+          {expanded && (
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M5 3.5L10.5 8L5 12.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {expanded && (
+        <p
+          style={{
+            fontSize: 11,
+            color: "var(--text-tertiary)",
+            margin: "0 18px 4px",
+          }}
+        >
+          작업 영역
+        </p>
+      )}
+
+      {/* 현재 스토리북의 하위 기능 메뉴 */}
+      <nav style={{ flex: "0 0 auto", padding: "0 8px" }}>
+        <button
+          onClick={() => hasStorybook && onToggleMapView()}
+          disabled={!hasStorybook}
           style={{
             width: "100%",
             display: "flex",
@@ -97,11 +171,11 @@ export default function Sidebar({
             borderRadius: 8,
             border: "none",
             background: "transparent",
-            cursor: "pointer",
+            cursor: hasStorybook ? "pointer" : "not-allowed",
             fontSize: 14,
-            color: "var(--text-primary)",
+            color: hasStorybook ? "var(--text-primary)" : "var(--text-tertiary)",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+          onMouseEnter={(e) => hasStorybook && (e.currentTarget.style.background = "var(--bg-hover)")}
           onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
@@ -119,7 +193,8 @@ export default function Sidebar({
         </button>
 
         <button
-          onClick={onTogglePersonList}
+          onClick={() => hasStorybook && onTogglePersonList()}
+          disabled={!hasStorybook}
           style={{
             width: "100%",
             display: "flex",
@@ -130,11 +205,11 @@ export default function Sidebar({
             borderRadius: 8,
             border: "none",
             background: "transparent",
-            cursor: "pointer",
+            cursor: hasStorybook ? "pointer" : "not-allowed",
             fontSize: 14,
-            color: "var(--text-primary)",
+            color: hasStorybook ? "var(--text-primary)" : "var(--text-tertiary)",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+          onMouseEnter={(e) => hasStorybook && (e.currentTarget.style.background = "var(--bg-hover)")}
           onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
@@ -148,7 +223,11 @@ export default function Sidebar({
           </svg>
           {expanded && <span>인물</span>}
         </button>
+      </nav>
 
+      <div style={{ flex: 1 }} />
+
+      <nav style={{ padding: "4px 8px" }}>
         <button
           onClick={toggleTheme}
           style={{

@@ -1,18 +1,21 @@
+// ============================================
+// 파일 경로: components/PersonPanel.tsx
+// ============================================
 "use client";
 
 import { useEffect, useState } from "react";
-import { COLOR_BG, COLOR_TEXT, PERSON_COLORS, type Person, type Relationship } from "@/types";
+import { useRouter } from "next/navigation";
+import type { Person, PersonField, Relationship } from "@/types";
 import PersonAvatar from "@/components/PersonAvatar";
-import ImageUploadField from "@/components/ImageUploadField";
-import { useConfirm } from "@/components/ConfirmProvider";
+import PersonQuickCreateModal from "@/components/PersonQuickCreateModal";
 import { useToast } from "@/components/ToastProvider";
 
-type View = "list" | "form" | "detail";
+type View = "list" | "detail";
 
 type Props = {
-  mapId: string;
+  storybookId: string;
   persons: Person[];
-  onPersonsChange: () => void; // 메인 관계도 화면에 변경사항을 알려 다시 불러오게 함
+  onPersonsChange: () => void; // 새 인물 등록 등으로 목록이 바뀌었을 때 메인 화면에 알림
   onClose: () => void;
   initialDetailId?: string | null;
 };
@@ -22,48 +25,31 @@ type PersonDetail = Person & {
   relationshipsTo: (Relationship & { from: Person })[];
 };
 
-export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, initialDetailId }: Props) {
-  const confirm = useConfirm();
+// 사이드패널은 "관계도 작업 중 곁눈질로 확인"하는 용도입니다.
+// 기본정보(나이/성별/소속/한줄소개)는 여기서 바로 고칠 수 있고,
+// 종족 추가 같은 필드 구조 편집이나 상세정보·관계 깊은 작업은 전체화면 상세에서 합니다.
+export default function PersonPanel({ storybookId, persons, onPersonsChange, onClose, initialDetailId }: Props) {
+  const router = useRouter();
   const { showToast } = useToast();
   const [view, setView] = useState<View>(initialDetailId ? "detail" : "list");
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(initialDetailId ?? null);
   const [detail, setDetail] = useState<PersonDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [showQuickCreateModal, setShowQuickCreateModal] = useState(false);
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [color, setColor] = useState<string>(PERSON_COLORS[0]);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-  const resetForm = () => {
-    setEditingId(null);
-    setName("");
-    setDescription("");
-    setColor(PERSON_COLORS[0]);
-    setImageUrl(null);
-  };
-
-  const startCreate = () => {
-    resetForm();
-    setView("form");
-  };
-
-  const startEdit = (p: Person) => {
-    setEditingId(p.id);
-    setName(p.name);
-    setDescription(p.description ?? "");
-    setColor(p.color);
-    setImageUrl(p.imageUrl ?? null);
-    setView("form");
-  };
+  // 기본정보 인라인 편집용 상태
+  const [editingBasic, setEditingBasic] = useState(false);
+  const [basicFields, setBasicFields] = useState<PersonField[]>([]);
+  const [savingBasic, setSavingBasic] = useState(false);
 
   const openDetail = async (id: string) => {
     setDetailId(id);
     setView("detail");
+    setEditingBasic(false);
     setDetailLoading(true);
     const res = await fetch(`/api/persons/${id}`);
-    setDetail(await res.json());
+    const data: PersonDetail = await res.json();
+    setDetail(data);
     setDetailLoading(false);
   };
 
@@ -74,40 +60,44 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDetailId]);
 
-  const handleSubmit = async () => {
-    if (!name.trim()) return;
-    if (editingId) {
-      await fetch(`/api/persons/${editingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description: description.trim(), color, imageUrl }),
-      });
-      showToast("success", "인물 정보를 수정했습니다.");
-    } else {
-      await fetch("/api/persons", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mapId, name: name.trim(), description: description.trim(), color, imageUrl }),
-      });
-      showToast("success", "새 인물을 등록했습니다.");
-    }
-    resetForm();
-    setView("list");
-    onPersonsChange();
+  const goFullView = (id: string) => {
+    router.replace(`/?storybookId=${storybookId}&personId=${id}`, { scroll: false });
   };
 
-  const handleDelete = async (id: string) => {
-    const ok = await confirm({
-      title: "인물 삭제",
-      message: "이 인물을 삭제하시겠습니까? 연결된 관계도 함께 삭제됩니다.",
-      confirmText: "삭제",
-      danger: true,
+  // 목록에서 보여줄 한 줄 요약 — "기본정보" 탭의 "한 줄 소개" 필드를 우선 사용
+  const summaryOf = (p: Person) => {
+    const intro = p.customFields?.find((f) => f.tab === "basic" && f.label === "한 줄 소개")?.value;
+    return intro || p.customFields?.find((f) => f.tab === "basic" && f.value)?.value || "";
+  };
+
+  const basicFieldsOf = (p: PersonDetail) => p.customFields?.filter((f) => f.tab === "basic") ?? [];
+
+  const startEditBasic = () => {
+    if (!detail) return;
+    setBasicFields(basicFieldsOf(detail).map((f) => ({ ...f })));
+    setEditingBasic(true);
+  };
+
+  const updateBasicField = (id: string, value: string) => {
+    setBasicFields((prev) => prev.map((f) => (f.id === id ? { ...f, value } : f)));
+  };
+
+  const saveBasicFields = async () => {
+    if (!detail) return;
+    setSavingBasic(true);
+    const otherFields = detail.customFields?.filter((f) => f.tab !== "basic") ?? [];
+    const merged = [...basicFields, ...otherFields];
+
+    await fetch(`/api/persons/${detail.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customFields: merged }),
     });
-    if (!ok) return;
-    await fetch(`/api/persons/${id}`, { method: "DELETE" });
-    showToast("info", "인물을 삭제했습니다.");
+    setSavingBasic(false);
+    setEditingBasic(false);
+    showToast("success", "기본정보를 저장했습니다.");
     onPersonsChange();
-    setView("list");
+    openDetail(detail.id);
   };
 
   return (
@@ -136,10 +126,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
       >
         {view !== "list" && (
           <button
-            onClick={() => {
-              if (view === "form") resetForm();
-              setView("list");
-            }}
+            onClick={() => setView("list")}
             aria-label="목록으로"
             style={{
               border: "none",
@@ -155,10 +142,8 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
             </svg>
           </button>
         )}
-        <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0, flex: 1 }}>
-          {view === "list" && "등록된 인물"}
-          {view === "form" && (editingId ? "인물 수정" : "인물 등록")}
-          {view === "detail" && "인물 상세"}
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0, flex: 1, color: "var(--text-primary)" }}>
+          {view === "list" ? "등록된 인물" : "인물 정보"}
         </h2>
         <button
           onClick={onClose}
@@ -183,7 +168,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
         {view === "list" && (
           <>
             <button
-              onClick={startCreate}
+              onClick={() => setShowQuickCreateModal(true)}
               style={{
                 width: "100%",
                 fontSize: 13,
@@ -222,7 +207,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                 >
                   <PersonAvatar person={p} size={34} fontSize={13} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: 500, fontSize: 14, margin: 0 }}>{p.name}</p>
+                    <p style={{ fontWeight: 500, fontSize: 14, margin: 0, color: "var(--text-primary)" }}>{p.name}</p>
                     <p
                       style={{
                         fontSize: 12,
@@ -233,127 +218,12 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {p.description || ""}
+                      {summaryOf(p)}
                     </p>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startEdit(p);
-                    }}
-                    aria-label="수정"
-                    style={{
-                      fontSize: 12,
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                      border: "1px solid var(--border-strong)",
-                      background: "var(--bg-surface)",
-                      color: "var(--text-primary)",
-                      cursor: "pointer",
-                      flexShrink: 0,
-                    }}
-                  >
-                    수정
-                  </button>
                 </div>
               ))
             )}
-          </>
-        )}
-
-        {view === "form" && (
-          <>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>프로필 사진</p>
-            <div style={{ marginBottom: 16 }}>
-              <ImageUploadField value={imageUrl} onChange={setImageUrl} />
-            </div>
-
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>프로필 색상</p>
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              {PERSON_COLORS.map((c) => (
-                <div
-                  key={c}
-                  onClick={() => setColor(c)}
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: "50%",
-                    background: COLOR_BG[c],
-                    border: `2px solid ${color === c ? COLOR_TEXT[c] : "transparent"}`,
-                    cursor: "pointer",
-                  }}
-                />
-              ))}
-            </div>
-
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>이름</p>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="예: 해리 포터"
-              style={{
-                width: "100%",
-                padding: "8px 10px",
-                borderRadius: 8,
-                border: "1px solid var(--border-strong)",
-                fontSize: 14,
-                marginBottom: 14,
-                boxSizing: "border-box",
-              }}
-            />
-
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>상세 설명</p>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              placeholder="소속, 성격, 특징 등"
-              style={{
-                width: "100%",
-                padding: "8px 10px",
-                borderRadius: 8,
-                border: "1px solid var(--border-strong)",
-                fontSize: 14,
-                resize: "vertical",
-                boxSizing: "border-box",
-                marginBottom: 16,
-              }}
-            />
-
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                disabled={!name.trim()}
-                onClick={handleSubmit}
-                style={{
-                  fontSize: 13,
-                  padding: "8px 16px",
-                  borderRadius: 8,
-                  border: "1px solid var(--accent)",
-                  background: name.trim() ? "var(--accent)" : "var(--text-tertiary)",
-                  color: "var(--accent-text)",
-                  cursor: name.trim() ? "pointer" : "not-allowed",
-                }}
-              >
-                {editingId ? "수정 저장" : "등록"}
-              </button>
-              {editingId && (
-                <button
-                  onClick={() => handleDelete(editingId)}
-                  style={{
-                    fontSize: 13,
-                    padding: "8px 16px",
-                    borderRadius: 8,
-                    border: "1px solid var(--danger-border)",
-                    background: "var(--bg-surface)",
-                    color: "var(--danger)",
-                    cursor: "pointer",
-                  }}
-                >
-                  삭제
-                </button>
-              )}
-            </div>
           </>
         )}
 
@@ -365,11 +235,164 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                   <PersonAvatar person={detail} size={48} fontSize={18} />
-                  <div>
-                    <p style={{ fontWeight: 500, fontSize: 16, margin: 0 }}>{detail.name}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 500, fontSize: 16, margin: 0, color: "var(--text-primary)" }}>{detail.name}</p>
+                  </div>
+                  <button
+                    onClick={() => goFullView(detail.id)}
+                    style={{
+                      fontSize: 12,
+                      padding: "5px 10px",
+                      borderRadius: 6,
+                      border: "1px solid var(--border-strong)",
+                      background: "var(--bg-surface)",
+                      color: "var(--text-primary)",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    전체보기
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                      <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* 기본정보 — 보기/인라인 편집 겸용 */}
+                <div style={{ borderTop: "1px solid var(--border-default)", paddingTop: 12, marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: 0 }}>기본정보</p>
+                    {!editingBasic && (
+                      <button
+                        onClick={startEditBasic}
+                        aria-label="기본정보 편집"
+                        title="기본정보 편집"
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          cursor: "pointer",
+                          padding: 2,
+                          color: "var(--text-tertiary)",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                          <path
+                            d="M11 2.5L13.5 5L5 13.5H2.5V11L11 2.5Z"
+                            stroke="currentColor"
+                            strokeWidth="1.3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {editingBasic ? (
+                    <>
+                      {basicFields.length === 0 ? (
+                        <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "0 0 10px" }}>
+                          기본정보 필드가 없습니다. 전체보기에서 추가할 수 있습니다.
+                        </p>
+                      ) : (
+                        basicFields.map((field) => (
+                          <div key={field.id} style={{ marginBottom: 10 }}>
+                            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 3 }}>
+                              {field.label || "(이름 없는 필드)"}
+                            </label>
+                            <input
+                              type="text"
+                              value={field.value}
+                              onChange={(e) => updateBasicField(field.id, e.target.value)}
+                              style={{
+                                width: "100%",
+                                padding: "6px 8px",
+                                borderRadius: 6,
+                                border: "1px solid var(--border-strong)",
+                                background: "var(--bg-input)",
+                                color: "var(--text-primary)",
+                                fontSize: 13,
+                                boxSizing: "border-box",
+                              }}
+                            />
+                          </div>
+                        ))
+                      )}
+                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        <button
+                          onClick={saveBasicFields}
+                          disabled={savingBasic}
+                          style={{
+                            fontSize: 12,
+                            padding: "6px 12px",
+                            borderRadius: 6,
+                            border: "1px solid var(--accent)",
+                            background: "var(--accent)",
+                            color: "var(--accent-text)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {savingBasic ? "저장 중..." : "저장"}
+                        </button>
+                        <button
+                          onClick={() => setEditingBasic(false)}
+                          style={{
+                            fontSize: 12,
+                            padding: "6px 12px",
+                            borderRadius: 6,
+                            border: "1px solid var(--border-strong)",
+                            background: "var(--bg-surface)",
+                            color: "var(--text-primary)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </>
+                  ) : basicFieldsOf(detail).length > 0 && basicFieldsOf(detail).some((f) => f.value) ? (
+                    basicFieldsOf(detail).map((field) => (
+                      <div
+                        key={field.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          padding: "6px 0",
+                          borderBottom: "1px solid var(--border-default)",
+                        }}
+                      >
+                        <span style={{ fontSize: 12, color: "var(--text-tertiary)", flexShrink: 0 }}>
+                          {field.label || "(이름 없는 필드)"}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            color: "var(--text-primary)",
+                            textAlign: "right",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {field.value || "-"}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>등록된 기본정보가 없습니다.</p>
+                  )}
+
+                  {!editingBasic && (
                     <button
-                      onClick={() => startEdit(detail)}
+                      onClick={() => goFullView(detail.id)}
                       style={{
+                        marginTop: 10,
                         fontSize: 12,
                         color: "var(--text-secondary)",
                         background: "none",
@@ -379,18 +402,12 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                         textDecoration: "underline",
                       }}
                     >
-                      수정하기
+                      상세정보 등 더 많은 정보는 전체보기에서
                     </button>
-                  </div>
+                  )}
                 </div>
 
-                <div style={{ borderTop: "1px solid var(--border-default)", paddingTop: 12, marginBottom: 12 }}>
-                  <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "0 0 6px" }}>상세 설명</p>
-                  <p style={{ fontSize: 13, margin: 0, lineHeight: 1.7 }}>
-                    {detail.description || "등록된 설명이 없습니다."}
-                  </p>
-                </div>
-
+                {/* 관계 — 보기 전용 */}
                 <div style={{ borderTop: "1px solid var(--border-default)", paddingTop: 12 }}>
                   <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "0 0 10px" }}>
                     연결된 관계 (
@@ -418,7 +435,7 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
                       >
                         <PersonAvatar person={other} size={28} fontSize={11} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontWeight: 500, fontSize: 13, margin: 0 }}>{other.name}</p>
+                          <p style={{ fontWeight: 500, fontSize: 13, margin: 0, color: "var(--text-primary)" }}>{other.name}</p>
                           {rel.label ? (
                             <span
                               style={{
@@ -450,6 +467,17 @@ export default function PersonPanel({ mapId, persons, onPersonsChange, onClose, 
           </>
         )}
       </div>
+
+      {showQuickCreateModal && (
+        <PersonQuickCreateModal
+          storybookId={storybookId}
+          onCreated={() => {
+            setShowQuickCreateModal(false);
+            onPersonsChange();
+          }}
+          onClose={() => setShowQuickCreateModal(false)}
+        />
+      )}
     </div>
   );
 }

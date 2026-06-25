@@ -19,37 +19,68 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
-  maps RelationshipMap[]
+  // 무차별 대입 로그인 시도 방어용
+  failedLoginCount     Int       @default(0)
+  lastFailedLoginAt    DateTime?
+
+  storybooks Storybook[]
 }
 
-// 관계도 (한 사용자가 여러 개를 가질 수 있음)
-model RelationshipMap {
+// 회원가입을 허용할 이메일 화이트리스트.
+// 본인이 Prisma Studio 등으로 직접 이메일을 추가해줘야, 그 이메일로만 회원가입이 가능합니다.
+// (공개 서비스가 아니라 본인과 지인들만 쓰는 용도라, 누구나 가입 가능한 상태를 막기 위한 장치입니다.)
+model AllowedEmail {
   id        String   @id @default(uuid())
-  title     String   @default("새 관계도")
+  email     String   @unique
+  note      String? // 누구에게 준 초대인지 메모용 (예: "철수")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+// 스토리북 — 사용자가 작품 하나를 작업하는 공간.
+// 인물/관계도뿐 아니라, 앞으로 세계관(World), 타임라인(Timeline), 시나리오(Plot),
+// 자료실(Asset) 등도 전부 이 Storybook 하나에 속하게 됩니다.
+// (기존 "관계도(RelationshipMap)"가 이 역할로 확장되었습니다 — 관계도는 이제
+//  Storybook 안에서 인물(Person)과 관계(Relationship)로 표현되는 한 기능입니다.)
+model Storybook {
+  id          String   @id @default(uuid())
+  title       String   @default("새 스토리북")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   persons       Person[]
   relationships Relationship[]
+  // 향후 추가 예정 (지금은 모델 없음, 자리만 비워둠):
+  // worlds   World[]
+  // timeline TimelineEvent[]
+  // plots    Plot[]
+  // assets   Asset[]
 }
 
-// 인물 (관계도의 노드)
+// 인물 (관계도의 노드 + 스토리북 안의 캐릭터 시트)
 model Person {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  color       String   @default("c-coral")
-  imageUrl    String?
-  positionX   Float?   // 관계도 화면에서의 좌표 (React Flow가 사용)
-  positionY   Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  name      String // 유일한 필수 항목
+  color     String   @default("c-coral")
+  imageUrl  String? // 평소 화면(노드, 프로필 등)에 쓰이는 480x480 크롭본 — 트래픽이 가장 잦은 곳입니다.
+  originalImageUrl String? // 클릭해서 "크게 보기" 했을 때만 불러오는 원본(1MB 초과 시 1920px로 압축).
+  positionX Float? // 관계도 화면에서의 좌표 (React Flow가 사용)
+  positionY Float?
 
-  mapId String
-  map   RelationshipMap @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  // 나이/외형/성격/트라우마/능력치 등 — 작가가 자유롭게 추가하는 커스텀 필드 목록.
+  // [{ id, label, type, value }, ...] 형태의 JSON 배열로 저장하여,
+  // 어떤 필드를 얼마나 추가하든 테이블 구조를 바꾸지 않아도 됩니다.
+  // 나중에 "판타지용/현대물용 템플릿" 기능도 이 필드의 초기값을 미리 채워주는 방식으로 구현 가능합니다.
+  customFields Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  storybookId String
+  storybook   Storybook @relation(fields: [storybookId], references: [id], onDelete: Cascade)
 
   // 이 인물이 "출발점"인 관계들
   relationshipsFrom Relationship[] @relation("RelationshipFrom")
@@ -60,12 +91,12 @@ model Person {
 // 인물 간 관계 (관계도의 엣지)
 model Relationship {
   id        String   @id @default(uuid())
-  label     String?  // 예: "스승과 제자", "친구"
+  label     String? // 예: "스승과 제자", "친구"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  mapId String
-  map   RelationshipMap @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  storybookId String
+  storybook   Storybook @relation(fields: [storybookId], references: [id], onDelete: Cascade)
 
   fromId String
   from   Person @relation("RelationshipFrom", fields: [fromId], references: [id], onDelete: Cascade)

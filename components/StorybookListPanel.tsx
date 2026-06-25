@@ -1,5 +1,5 @@
 // ============================================
-// 파일 경로: components/MapListPanel.tsx
+// 파일 경로: components/StorybookListPanel.tsx
 // ============================================
 "use client";
 
@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ToastProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 
-type MapSummary = {
+type StorybookSummary = {
   id: string;
   title: string;
   updatedAt: string;
@@ -15,89 +15,94 @@ type MapSummary = {
 };
 
 type Props = {
-  activeMapId: string | null;
-  onSelectMap: (mapId: string) => void;
-  onActiveMapDeleted: () => void;
+  activeStorybookId: string | null;
+  onSelectStorybook: (storybookId: string) => void;
+  onActiveStorybookDeleted: () => void;
   onClose: () => void;
 };
 
-export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDeleted, onClose }: Props) {
+export default function StorybookListPanel({
+  activeStorybookId,
+  onSelectStorybook,
+  onActiveStorybookDeleted,
+  onClose,
+}: Props) {
   const { showToast } = useToast();
   const confirm = useConfirm();
 
-  const [maps, setMaps] = useState<MapSummary[]>([]);
+  const [storybooks, setStorybooks] = useState<StorybookSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
-  const loadMaps = async () => {
-    const res = await fetch("/api/maps");
+  const loadStorybooks = async () => {
+    const res = await fetch("/api/storybooks");
     if (res.ok) {
-      setMaps(await res.json());
+      setStorybooks(await res.json());
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    loadMaps();
+    loadStorybooks();
   }, []);
 
-  const filteredMaps = useMemo(() => {
-    if (!query.trim()) return maps;
+  const filteredStorybooks = useMemo(() => {
+    if (!query.trim()) return storybooks;
     const q = query.trim().toLowerCase();
-    return maps.filter((m) => m.title.toLowerCase().includes(q));
-  }, [maps, query]);
+    return storybooks.filter((s) => s.title.toLowerCase().includes(q));
+  }, [storybooks, query]);
 
-  const createMap = async () => {
-    const res = await fetch("/api/maps", {
+  const createStorybook = async () => {
+    const res = await fetch("/api/storybooks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "새 관계도" }),
+      body: JSON.stringify({ title: "새 스토리북" }),
     });
     if (!res.ok) {
-      showToast("error", "관계도를 만들지 못했습니다.");
+      showToast("error", "스토리북을 만들지 못했습니다.");
       return;
     }
     const created = await res.json();
-    const newMap: MapSummary = { ...created, _count: { persons: 0 } };
-    setMaps((prev) => [newMap, ...prev]);
-    onSelectMap(newMap.id);
-    setEditingId(newMap.id);
-    setEditingTitle(newMap.title);
+    const newStorybook: StorybookSummary = { ...created, _count: { persons: 0 } };
+    setStorybooks((prev) => [newStorybook, ...prev]);
+    onSelectStorybook(newStorybook.id);
+    setEditingId(newStorybook.id);
+    setEditingTitle(newStorybook.title);
   };
 
-  const startEditTitle = (m: MapSummary, e: React.MouseEvent) => {
+  const startEditTitle = (s: StorybookSummary, e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditingId(m.id);
-    setEditingTitle(m.title);
+    setEditingId(s.id);
+    setEditingTitle(s.title);
   };
 
   const saveTitle = async (id: string) => {
-    const title = editingTitle.trim() || "제목 없는 관계도";
-    await fetch(`/api/maps/${id}`, {
+    const title = editingTitle.trim() || "제목 없는 스토리북";
+    await fetch(`/api/storybooks/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title }),
     });
-    setMaps((prev) => prev.map((m) => (m.id === id ? { ...m, title } : m)));
+    setStorybooks((prev) => prev.map((s) => (s.id === id ? { ...s, title } : s)));
     setEditingId(null);
   };
 
-  const deleteMap = async (id: string, e: React.MouseEvent) => {
+  const deleteStorybook = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const ok = await confirm({
-      title: "관계도 삭제",
-      message: "이 관계도와 안의 모든 인물·관계가 삭제됩니다.",
+      title: "스토리북 삭제",
+      message: "이 스토리북과 안의 모든 인물·관계가 삭제됩니다.",
       confirmText: "삭제",
       danger: true,
     });
     if (!ok) return;
-    await fetch(`/api/maps/${id}`, { method: "DELETE" });
-    setMaps((prev) => prev.filter((m) => m.id !== id));
-    showToast("info", "관계도를 삭제했습니다.");
-    if (activeMapId === id) {
-      onActiveMapDeleted();
+    await fetch(`/api/storybooks/${id}`, { method: "DELETE" });
+    setStorybooks((prev) => prev.filter((s) => s.id !== id));
+    showToast("info", "스토리북을 삭제했습니다.");
+    if (activeStorybookId === id) {
+      onActiveStorybookDeleted();
     }
   };
 
@@ -124,7 +129,7 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
           padding: "16px 16px 12px",
         }}
       >
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>관계도</h2>
+        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>스토리북</h2>
         <button
           onClick={onClose}
           aria-label="패널 닫기"
@@ -161,24 +166,25 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="관계도 검색..."
+            placeholder="스토리북 검색..."
             style={{
               width: "100%",
               padding: "8px 10px 8px 30px",
               borderRadius: 8,
               border: "1px solid var(--border-default)",
+              background: "var(--bg-canvas)",
+              color: "var(--text-primary)",
               fontSize: 13,
               boxSizing: "border-box",
-              background: "var(--bg-canvas)",
             }}
           />
         </div>
       </div>
 
-      {/* 새 관계도 버튼 */}
+      {/* 새 스토리북 버튼 */}
       <div style={{ padding: "0 16px 12px" }}>
         <button
-          onClick={createMap}
+          onClick={createStorybook}
           style={{
             width: "100%",
             fontSize: 13,
@@ -198,7 +204,7 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
             <line x1="8" y1="2.5" x2="8" y2="13.5" stroke="var(--text-primary)" strokeWidth="1.4" strokeLinecap="round" />
             <line x1="2.5" y1="8" x2="13.5" y2="8" stroke="var(--text-primary)" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
-          새 관계도
+          새 스토리북
         </button>
       </div>
 
@@ -206,15 +212,15 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
       <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 16px" }}>
         {loading ? (
           <p style={{ fontSize: 13, color: "var(--text-secondary)", padding: "0 8px" }}>불러오는 중...</p>
-        ) : filteredMaps.length === 0 ? (
+        ) : filteredStorybooks.length === 0 ? (
           <p style={{ fontSize: 13, color: "var(--text-secondary)", padding: "0 8px" }}>
-            {query ? "검색 결과가 없습니다." : "아직 만든 관계도가 없습니다."}
+            {query ? "검색 결과가 없습니다." : "아직 만든 스토리북이 없습니다."}
           </p>
         ) : (
-          filteredMaps.map((m) => (
+          filteredStorybooks.map((s) => (
             <div
-              key={m.id}
-              onClick={() => onSelectMap(m.id)}
+              key={s.id}
+              onClick={() => onSelectStorybook(s.id)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -223,17 +229,17 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                 borderRadius: 8,
                 marginBottom: 2,
                 cursor: "pointer",
-                background: activeMapId === m.id ? "var(--bg-hover)" : "transparent",
+                background: activeStorybookId === s.id ? "var(--bg-hover)" : "transparent",
               }}
               onMouseEnter={(e) => {
-                if (activeMapId !== m.id) e.currentTarget.style.background = "var(--bg-canvas)";
+                if (activeStorybookId !== s.id) e.currentTarget.style.background = "var(--bg-canvas)";
               }}
               onMouseLeave={(e) => {
-                if (activeMapId !== m.id) e.currentTarget.style.background = "transparent";
+                if (activeStorybookId !== s.id) e.currentTarget.style.background = "transparent";
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
-                {editingId === m.id ? (
+                {editingId === s.id ? (
                   <input
                     autoFocus
                     type="text"
@@ -241,16 +247,18 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => setEditingTitle(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") saveTitle(m.id);
+                      if (e.key === "Enter") saveTitle(s.id);
                       if (e.key === "Escape") setEditingId(null);
                     }}
-                    onBlur={() => saveTitle(m.id)}
+                    onBlur={() => saveTitle(s.id)}
                     style={{
                       width: "100%",
                       fontSize: 14,
                       padding: "3px 6px",
                       borderRadius: 6,
-                      border: "1px solid var(--text-primary)",
+                      border: "1px solid var(--accent)",
+                      background: "var(--bg-surface)",
+                      color: "var(--text-primary)",
                       boxSizing: "border-box",
                     }}
                   />
@@ -267,17 +275,17 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {m.title}
+                      {s.title}
                     </p>
                     <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "2px 0 0" }}>
-                      인물 {m._count.persons}명
+                      인물 {s._count.persons}명
                     </p>
                   </>
                 )}
               </div>
-              {editingId !== m.id && (
+              {editingId !== s.id && (
                 <button
-                  onClick={(e) => startEditTitle(m, e)}
+                  onClick={(e) => startEditTitle(s, e)}
                   aria-label="이름 수정"
                   style={{
                     border: "none",
@@ -300,7 +308,7 @@ export default function MapListPanel({ activeMapId, onSelectMap, onActiveMapDele
                 </button>
               )}
               <button
-                onClick={(e) => deleteMap(m.id, e)}
+                onClick={(e) => deleteStorybook(s.id, e)}
                 aria-label="삭제"
                 style={{
                   border: "none",

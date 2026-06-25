@@ -11,11 +11,16 @@ function getSecretKey() {
       ".env에 SESSION_SECRET이 설정되어 있지 않습니다. 임의의 긴 문자열을 추가해주세요."
     );
   }
+  if (secret.length < 32) {
+    throw new Error(
+      "SESSION_SECRET이 너무 짧습니다 (32자 이상 권장). 추측하기 어려운 긴 문자열로 바꿔주세요."
+    );
+  }
   return new TextEncoder().encode(secret);
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, 12);
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {

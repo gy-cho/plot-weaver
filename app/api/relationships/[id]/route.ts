@@ -1,3 +1,6 @@
+// ============================================
+// 파일 경로: app/api/relationships/[id]/route.ts
+// ============================================
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
@@ -5,9 +8,9 @@ import { getCurrentUser } from "@/lib/session";
 async function getOwnedRelationship(relationshipId: string, userId: string) {
   const rel = await prisma.relationship.findUnique({
     where: { id: relationshipId },
-    include: { map: true },
+    include: { storybook: true },
   });
-  if (!rel || rel.map.ownerId !== userId) return null;
+  if (!rel || rel.storybook.ownerId !== userId) return null;
   return rel;
 }
 

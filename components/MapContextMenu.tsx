@@ -83,6 +83,15 @@ export default function MapContextMenu({ x, y, items, onClose }: Props) {
                 />
               </svg>
             )}
+            {item.label === "관계 등록" && (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <circle cx="3.5" cy="3.5" r="2" stroke="currentColor" strokeWidth="1.3" />
+                <circle cx="12.5" cy="12.5" r="2" stroke="currentColor" strokeWidth="1.3" />
+                <line x1="5" y1="5" x2="11" y2="11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <line x1="11" y1="5" x2="11" y2="2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <line x1="13.5" y1="4.5" x2="8.5" y2="4.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+            )}
             {item.label === "노드 삭제" && (
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <path

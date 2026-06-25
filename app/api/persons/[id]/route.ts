@@ -1,14 +1,17 @@
+// ============================================
+// 파일 경로: app/api/persons/[id]/route.ts
+// ============================================
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
-// 인물이 속한 map의 소유자가 현재 사용자인지 확인
+// 인물이 속한 스토리북의 소유자가 현재 사용자인지 확인
 async function getOwnedPerson(personId: string, userId: string) {
   const person = await prisma.person.findUnique({
     where: { id: personId },
-    include: { map: true },
+    include: { storybook: true },
   });
-  if (!person || person.map.ownerId !== userId) return null;
+  if (!person || person.storybook.ownerId !== userId) return null;
   return person;
 }
 
@@ -50,14 +53,15 @@ export async function PATCH(
   const body = await request.json();
 
   // body에 명시적으로 포함된 필드만 업데이트합니다. (예: 위치만 보내는 드래그 저장 요청이
-  // name 등 다른 필드를 실수로 비워버리지 않도록)
+  // name이나 customFields 등 다른 필드를 실수로 비워버리지 않도록)
   const data: Record<string, unknown> = {};
   if ("name" in body) data.name = body.name;
-  if ("description" in body) data.description = body.description;
   if ("color" in body) data.color = body.color;
   if ("imageUrl" in body) data.imageUrl = body.imageUrl;
+  if ("originalImageUrl" in body) data.originalImageUrl = body.originalImageUrl;
   if ("positionX" in body) data.positionX = body.positionX;
   if ("positionY" in body) data.positionY = body.positionY;
+  if ("customFields" in body) data.customFields = body.customFields;
 
   const person = await prisma.person.update({
     where: { id },

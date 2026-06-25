@@ -4,7 +4,7 @@ import { useStore, type EdgeProps, type ReactFlowState } from "reactflow";
 
 // 노드 원의 고정 지름. PersonNode.tsx의 size 값과 반드시 일치해야 합니다.
 // (라벨이 붙어 노드 전체 높이가 늘어나도, 시각적인 원은 항상 이 크기로 고정되어 있습니다.)
-const NODE_DIAMETER = 80;
+const NODE_DIAMETER = 96;
 
 // 노드의 "원 중심" 좌표를 구하기 위한 헬퍼.
 // node.height는 이름 라벨이 붙으면 늘어나므로 사용하지 않고, 항상 고정된 원 지름의 절반만 더합니다.

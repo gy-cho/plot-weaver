@@ -52,7 +52,7 @@ export default function PersonSummaryPanel({
                   whiteSpace: "nowrap",
                 }}
               >
-                {person.description || "설명 없음"}
+                {person.customFields?.[0]?.value || "정보 없음"}
               </p>
             </div>
             <button

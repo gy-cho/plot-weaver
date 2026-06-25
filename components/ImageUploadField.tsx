@@ -1,40 +1,53 @@
 "use client";
 
 import { useRef, useState } from "react";
+import ImageCropModal from "@/components/ImageCropModal";
 
 type Props = {
   value: string | null;
-  onChange: (url: string | null) => void;
+  onChange: (imageUrl: string | null, originalImageUrl: string | null) => void;
 };
+
+async function uploadBlob(blob: Blob, filenamePrefix: string): Promise<string> {
+  const ext = blob.type === "image/jpeg" ? "jpg" : blob.type === "image/webp" ? "webp" : "png";
+  const formData = new FormData();
+  formData.append("file", blob, `${filenamePrefix}.${ext}`);
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "업로드에 실패했습니다.");
+  return data.url;
+}
 
 export default function ImageUploadField({ value, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError(null);
+    setCropFile(file); // 바로 업로드하지 않고, 먼저 크롭 모달을 띄웁니다.
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
+  // 크롭본(평소 화면용)과 원본 처리본(클릭해서 크게 볼 때용)을 각각 업로드합니다.
+  const handleCropped = async (croppedBlob: Blob, originalBlob: Blob) => {
+    setCropFile(null);
     setUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "업로드에 실패했습니다.");
-      } else {
-        onChange(data.url);
-      }
-    } catch {
-      setError("업로드 중 오류가 발생했습니다.");
+      const [croppedUrl, originalUrl] = await Promise.all([
+        uploadBlob(croppedBlob, "profile"),
+        uploadBlob(originalBlob, "profile-original"),
+      ]);
+      onChange(croppedUrl, originalUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "업로드 중 오류가 발생했습니다.");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
     }
   };
 
@@ -79,7 +92,7 @@ export default function ImageUploadField({ value, onChange }: Props) {
           {value && (
             <button
               type="button"
-              onClick={() => onChange(null)}
+              onClick={() => onChange(null, null)}
               style={{
                 fontSize: 13,
                 padding: "6px 12px",
@@ -103,6 +116,14 @@ export default function ImageUploadField({ value, onChange }: Props) {
         style={{ display: "none" }}
       />
       {error && <p style={{ fontSize: 12, color: "var(--danger)", margin: "4px 0 0" }}>{error}</p>}
+
+      {cropFile && (
+        <ImageCropModal
+          file={cropFile}
+          onCropped={handleCropped}
+          onCancel={() => setCropFile(null)}
+        />
+      )}
     </div>
   );
 }

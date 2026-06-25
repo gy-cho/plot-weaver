@@ -22,9 +22,11 @@ import PersonSummaryPanel from "@/components/PersonSummaryPanel";
 import PersonSelectModal from "@/components/PersonSelectModal";
 import EdgeLabelModal from "@/components/EdgeLabelModal";
 import Sidebar from "@/components/Sidebar";
-import MapListPanel from "@/components/MapListPanel";
+import StorybookListPanel from "@/components/StorybookListPanel";
 import MapContextMenu from "@/components/MapContextMenu";
 import PersonPanel from "@/components/PersonPanel";
+import PersonDetailView from "@/components/PersonDetailView";
+import PersonQuickCreateModal from "@/components/PersonQuickCreateModal";
 import { useToast } from "@/components/ToastProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { useAuth } from "@/components/AuthProvider";
@@ -73,7 +75,8 @@ function defaultLayout(persons: Person[]): NodeSlot[] {
 function MapPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const mapId = searchParams.get("mapId");
+  const storybookId = searchParams.get("storybookId");
+  const detailPersonId = searchParams.get("personId");
 
   const { user, loading: authLoading } = useAuth();
   const { theme } = useTheme();
@@ -90,14 +93,14 @@ function MapPageInner() {
   //  경쟁 상태가 생겨, 테마 전환 직후 옛 값을 읽어버리는 문제가 있었습니다.)
   // → 나중에 CI 색상이 정해지면 globals.css와 이 두 객체를 함께 맞춰주면 됩니다.
   const LIGHT_EDGE_COLORS = {
-    stroke: "#6B6760",
-    labelFill: "#6B6760",
+    stroke: "#A8B0BC",
+    labelFill: "#5B6B7D",
     labelBg: "#FAF8F3",
     grid: "#ECE7DC",
   };
   const DARK_EDGE_COLORS = {
-    stroke: "#B0ABA0",
-    labelFill: "#B0ABA0",
+    stroke: "#6B7585",
+    labelFill: "#8FA0B5",
     labelBg: "#25241F",
     grid: "#2A2922",
   };
@@ -109,7 +112,11 @@ function MapPageInner() {
   const [activeEdgeId, setActiveEdgeId] = useState<string | null>(null);
   const [showPersonPanel, setShowPersonPanel] = useState(false);
   const [panelDetailId, setPanelDetailId] = useState<string | null>(null);
-  const [showMapList, setShowMapList] = useState(false);
+  const [showStorybookList, setShowStorybookList] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
+  const [currentStorybookTitle, setCurrentStorybookTitle] = useState<string | null>(null);
+  const [personDetailDirty, setPersonDetailDirty] = useState(false);
+  const [showQuickCreateModal, setShowQuickCreateModal] = useState(false);
   const [contextMenu, setContextMenu] = useState<
     | { type: "pane"; x: number; y: number; flowX: number; flowY: number }
     | { type: "node"; x: number; y: number; slotId: string }
@@ -118,8 +125,8 @@ function MapPageInner() {
 
   const { screenToFlowPosition } = useReactFlow();
 
-  // 로그인하지 않았으면 로그인 화면으로 보냅니다. mapId가 없는 것은 더 이상 에러가 아니라
-  // "관계도를 선택/생성해주세요"라는 정상적인 빈 상태로 같은 화면 안에서 처리합니다.
+  // 로그인하지 않았으면 로그인 화면으로 보냅니다. storybookId가 없는 것은 더 이상 에러가 아니라
+  // "스토리북을 선택/생성해주세요"라는 정상적인 빈 상태로 같은 화면 안에서 처리합니다.
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -127,7 +134,7 @@ function MapPageInner() {
     }
   }, [authLoading, user, router]);
 
-  // 다른 관계도로 전환했을 때 이전 관계도의 데이터가 잠깐 보이지 않도록 초기화
+  // 다른 스토리북으로 전환했을 때 이전 데이터가 잠깐 보이지 않도록 초기화
   useEffect(() => {
     setPersons([]);
     setRelationships([]);
@@ -135,16 +142,39 @@ function MapPageInner() {
     setLoading(true);
     setActiveSlotId(null);
     setActiveEdgeId(null);
-  }, [mapId]);
+    setShowMapView(false);
+    setShowPersonPanel(false);
+    setCurrentStorybookTitle(null);
+
+    if (!storybookId) return;
+    fetch(`/api/storybooks/${storybookId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setCurrentStorybookTitle(data.title);
+      });
+  }, [storybookId]);
+
+  // 인물 상세/편집 화면으로 전환되면, 관계도 위에 떠 있던 작은 패널/모달들을 정리합니다.
+  useEffect(() => {
+    if (detailPersonId) {
+      setActiveSlotId(null);
+      setActiveEdgeId(null);
+      setShowSelectModal(false);
+    }
+  }, [detailPersonId]);
+
+  const handlePersonDetailDirtyChange = useCallback((dirty: boolean) => {
+    setPersonDetailDirty(dirty);
+  }, []);
 
   const loadData = useCallback(async () => {
-    if (!mapId) return;
+    if (!storybookId) return;
     const [pRes, rRes] = await Promise.all([
-      fetch(`/api/persons?mapId=${mapId}`),
-      fetch(`/api/relationships?mapId=${mapId}`),
+      fetch(`/api/persons?storybookId=${storybookId}`),
+      fetch(`/api/relationships?storybookId=${storybookId}`),
     ]);
     if (!pRes.ok || !rRes.ok) {
-      showToast("error", "관계도를 불러오지 못했습니다.");
+      showToast("error", "스토리북을 불러오지 못했습니다.");
       setLoading(false);
       return;
     }
@@ -154,17 +184,17 @@ function MapPageInner() {
     setRelationships(relsData);
     setSlots((prev) => (prev.length === 0 ? defaultLayout(personsData) : prev));
     setLoading(false);
-  }, [mapId, showToast]);
+  }, [storybookId, showToast]);
 
   useEffect(() => {
-    if (!mapId) {
+    if (!storybookId) {
       setLoading(false);
       return;
     }
     if (user) {
       loadData();
     }
-  }, [mapId, user, loadData]);
+  }, [storybookId, user, loadData]);
 
   const getPerson = useCallback(
     (id: string | null) => (id ? persons.find((p) => p.id === id) ?? null : null),
@@ -242,11 +272,10 @@ function MapPageInner() {
         showToast(
           "info",
           persons.length === 0
-            ? "등록된 인물이 없습니다. 인물을 먼저 등록해주세요."
+            ? "등록된 인물이 없습니다. 인물을 등록해주세요."
             : "배정 가능한 인물이 없습니다. 새 인물을 등록해주세요."
         );
-        setPanelDetailId(null);
-        setShowPersonPanel(true);
+        setShowQuickCreateModal(true);
         return;
       }
       setSelectModalMode("assign");
@@ -256,8 +285,9 @@ function MapPageInner() {
   );
 
   // 빈 노드에 기존 인물 배정, 또는 등록된 인물에 새 관계 연결
-  const handleSelectPerson = async (person: Person) => {
-    if (selectModalMode === "assign") {
+  const handleSelectPerson = async (person: Person, modeOverride?: "assign" | "connect") => {
+    const mode = modeOverride ?? selectModalMode;
+    if (mode === "assign") {
       if (!activeSlotId) return;
       setSlots((prev) =>
         prev.map((s) => (s.id === activeSlotId ? { ...s, personId: person.id } : s))
@@ -268,7 +298,7 @@ function MapPageInner() {
       const res = await fetch("/api/relationships", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mapId, fromId: activePerson.id, toId: person.id, label: "" }),
+        body: JSON.stringify({ storybookId, fromId: activePerson.id, toId: person.id, label: "" }),
       });
       if (res.ok) {
         const newRel: Relationship = await res.json();
@@ -432,7 +462,7 @@ function MapPageInner() {
     [slots, showToast]
   );
 
-  // 다른 관계도로 이동하거나 화면을 떠날 때, 아직 저장되지 않은 예약된 위치 저장을 정리합니다.
+  // 다른 스토리북으로 이동하거나 화면을 떠날 때, 아직 저장되지 않은 예약된 위치 저장을 정리합니다.
   useEffect(() => {
     return () => {
       Object.values(dragSaveTimers.current).forEach((timer) => clearTimeout(timer));
@@ -459,6 +489,25 @@ function MapPageInner() {
       .filter((e): e is Edge => e !== null);
   }, [relationships, slots, edgeColors]);
 
+  // 인물 상세화면에서 저장하지 않은 변경사항이 있는 상태로 사이드바 메뉴 등을 눌러
+  // 화면을 벗어나려고 할 때 확인을 거칩니다.
+  // (early return보다 위에 있어야 합니다 — 모든 hook은 조건문과 무관하게 항상 같은 순서로 호출되어야 합니다.)
+  const guardLeavePersonDetail = useCallback(
+    async (proceed: () => void) => {
+      if (detailPersonId && personDetailDirty) {
+        const ok = await confirm({
+          title: "저장하지 않은 변경사항",
+          message: "수정한 내용이 저장되지 않습니다. 그래도 나가시겠습니까?",
+          confirmText: "나가기",
+          danger: true,
+        });
+        if (!ok) return;
+      }
+      proceed();
+    },
+    [detailPersonId, personDetailDirty, confirm]
+  );
+
   if (authLoading || !user) {
     return (
       <div style={{ padding: 40, fontSize: 14, color: "var(--text-secondary)" }}>불러오는 중...</div>
@@ -468,31 +517,68 @@ function MapPageInner() {
   return (
     <div style={{ width: "100%", height: "100vh", display: "flex" }}>
       <Sidebar
-        mapListOpen={showMapList}
-        onToggleMapList={() => setShowMapList((v) => !v)}
+        currentStorybookTitle={currentStorybookTitle}
+        storybookListOpen={showStorybookList}
+        onToggleStorybookList={() =>
+          guardLeavePersonDetail(() => {
+            if (detailPersonId) router.replace(`/?storybookId=${storybookId}`, { scroll: false });
+            setShowStorybookList((v) => !v);
+          })
+        }
+        mapViewOpen={showMapView}
+        onToggleMapView={() =>
+          guardLeavePersonDetail(() => {
+            if (detailPersonId) {
+              router.replace(`/?storybookId=${storybookId}`, { scroll: false });
+              setShowMapView(true);
+            } else {
+              setShowMapView((v) => !v);
+            }
+          })
+        }
         personListOpen={showPersonPanel}
-        onTogglePersonList={() => {
-          if (!showPersonPanel) setPanelDetailId(null);
-          setShowPersonPanel((v) => !v);
-        }}
+        onTogglePersonList={() =>
+          guardLeavePersonDetail(() => {
+            if (detailPersonId) router.replace(`/?storybookId=${storybookId}`, { scroll: false });
+            if (!showPersonPanel) setPanelDetailId(null);
+            setShowPersonPanel((v) => !v);
+          })
+        }
       />
 
-      {showMapList && (
-        <MapListPanel
-          activeMapId={mapId}
-          onSelectMap={(id) => {
-            router.replace(`/?mapId=${id}`, { scroll: false });
+      {showStorybookList && (
+        <StorybookListPanel
+          activeStorybookId={storybookId}
+          onSelectStorybook={(id) => {
+            guardLeavePersonDetail(() => router.replace(`/?storybookId=${id}`, { scroll: false }));
           }}
-          onActiveMapDeleted={() => {
+          onActiveStorybookDeleted={() => {
             router.replace("/", { scroll: false });
           }}
-          onClose={() => setShowMapList(false)}
+          onClose={() => setShowStorybookList(false)}
         />
       )}
 
       <div style={{ flex: 1, height: "100vh", position: "relative", background: "var(--bg-canvas)" }}>
-        {!mapId ? (
-          // 관계도가 선택되지 않은 상태 — 다른 페이지로 보내지 않고 같은 화면에서 안내합니다.
+        {storybookId && detailPersonId ? (
+          // 인물 상세/편집 화면 — 페이지 이동이 아니라 이 영역만 바뀌는 것이라
+          // 좌측 사이드바는 항상 그대로 유지됩니다.
+          <PersonDetailView
+            storybookId={storybookId}
+            personId={detailPersonId}
+            onClose={() => router.replace(`/?storybookId=${storybookId}`, { scroll: false })}
+            onNavigateToPerson={(id) =>
+              router.replace(`/?storybookId=${storybookId}&personId=${id}`, { scroll: false })
+            }
+            onPersonCreated={(id) =>
+              router.replace(`/?storybookId=${storybookId}&personId=${id}`, { scroll: false })
+            }
+            onPersonChanged={loadData}
+            onDeleted={() => router.replace(`/?storybookId=${storybookId}`, { scroll: false })}
+            onDirtyChange={handlePersonDetailDirtyChange}
+          />
+        ) : !storybookId ? (
+          // 스토리북이 선택되지 않은 상태 — 다른 페이지로 보내지 않고 같은 화면에서 안내합니다.
           <div
             style={{
               height: "100%",
@@ -504,10 +590,10 @@ function MapPageInner() {
             }}
           >
             <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>
-              아직 선택된 관계도가 없습니다.
+              아직 선택된 스토리북이 없습니다.
             </p>
             <button
-              onClick={() => setShowMapList(true)}
+              onClick={() => setShowStorybookList(true)}
               style={{
                 fontSize: 13,
                 padding: "8px 16px",
@@ -518,8 +604,61 @@ function MapPageInner() {
                 cursor: "pointer",
               }}
             >
-              관계도 목록 열기
+              스토리북 목록 열기
             </button>
+          </div>
+        ) : !showMapView ? (
+          // 스토리북은 선택됐지만 아직 "관계도" 화면을 열지 않은 상태.
+          // 이 자리는 앞으로 대시보드(진행률, 최근 수정 등)가 들어갈 자리입니다.
+          <div
+            style={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 14,
+            }}
+          >
+            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+              {currentStorybookTitle ?? "스토리북"}
+            </p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
+              왼쪽 메뉴에서 작업할 기능을 선택해주세요.
+            </p>
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => setShowMapView(true)}
+                style={{
+                  fontSize: 13,
+                  padding: "8px 16px",
+                  borderRadius: 8,
+                  border: "1px solid var(--accent)",
+                  background: "var(--accent)",
+                  color: "var(--accent-text)",
+                  cursor: "pointer",
+                }}
+              >
+                관계도 열기
+              </button>
+              <button
+                onClick={() => {
+                  setPanelDetailId(null);
+                  setShowPersonPanel(true);
+                }}
+                style={{
+                  fontSize: 13,
+                  padding: "8px 16px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border-strong)",
+                  background: "var(--bg-surface)",
+                  color: "var(--text-primary)",
+                  cursor: "pointer",
+                }}
+              >
+                인물 보기
+              </button>
+            </div>
           </div>
         ) : loading ? (
           <div
@@ -532,7 +671,7 @@ function MapPageInner() {
               color: "var(--text-secondary)",
             }}
           >
-            관계도를 불러오는 중...
+            스토리북을 불러오는 중...
           </div>
         ) : (
           <>
@@ -596,6 +735,19 @@ function MapPageInner() {
               />
             )}
 
+            {showQuickCreateModal && storybookId && (
+              <PersonQuickCreateModal
+                storybookId={storybookId}
+                onCreated={(person) => {
+                  setPersons((prev) => [...prev, person]);
+                  setShowQuickCreateModal(false);
+                  // 빈 노드에서 "인물 등록"을 눌러 들어온 경우, 새로 만든 인물을 바로 그 노드에 배정합니다.
+                  handleSelectPerson(person, "assign");
+                }}
+                onClose={() => setShowQuickCreateModal(false)}
+              />
+            )}
+
             {activeEdgeRel && (
               <EdgeLabelModal
                 fromPerson={getPerson(activeEdgeRel.fromId)}
@@ -627,6 +779,19 @@ function MapPageInner() {
                       : "인물 등록",
                     onClick: () => requestAssignPerson(contextMenu.slotId),
                   },
+                  ...(slots.find((s) => s.id === contextMenu.slotId)?.personId
+                    ? [
+                        {
+                          label: "관계 등록",
+                          onClick: () => {
+                            setActiveSlotId(contextMenu.slotId);
+                            setActiveEdgeId(null);
+                            setSelectModalMode("connect");
+                            setShowSelectModal(true);
+                          },
+                        },
+                      ]
+                    : []),
                   {
                     label: "노드 삭제",
                     danger: true,
@@ -640,9 +805,9 @@ function MapPageInner() {
         )}
       </div>
 
-      {showPersonPanel && mapId && (
+      {showPersonPanel && storybookId && (
         <PersonPanel
-          mapId={mapId}
+          storybookId={storybookId}
           persons={persons}
           initialDetailId={panelDetailId}
           onPersonsChange={loadData}

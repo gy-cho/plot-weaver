@@ -21,7 +21,7 @@ const invisibleHandleStyle: React.CSSProperties = {
 
 export default function PersonNode({ data }: { data: PersonNodeData }) {
   const { person, onClick } = data;
-  const size = 80;
+  const size = 96;
 
   const bg = person ? COLOR_BG[person.color] ?? "var(--bg-hover)" : "var(--bg-surface)";
   const textColor = person ? COLOR_TEXT[person.color] ?? "var(--text-primary)" : "var(--text-tertiary)";

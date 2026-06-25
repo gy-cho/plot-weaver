@@ -72,7 +72,7 @@ export default function PersonSelectModal({ persons, excludeIds, onSelect, onClo
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {p.description || ""}
+                  {p.customFields?.[0]?.value || ""}
                 </p>
               </div>
             </div>
