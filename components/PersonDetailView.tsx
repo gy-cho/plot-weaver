@@ -20,6 +20,7 @@ import PersonFieldsEditor from "@/components/PersonFieldsEditor";
 import PersonFieldsView from "@/components/PersonFieldsView";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { useToast } from "@/components/ToastProvider";
+import { useSignedImageUrl } from "@/lib/useSignedImageUrl";
 
 type PersonDetail = Person & {
   relationshipsFrom: (Relationship & { to: Person })[];
@@ -62,6 +63,8 @@ export default function PersonDetailView({
   const [color, setColor] = useState<string>(PERSON_COLORS[0]);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
+  const signedImageUrl = useSignedImageUrl(imageUrl);
+  const signedOriginalImageUrl = useSignedImageUrl(originalImageUrl);
   const [fields, setFields] = useState<PersonField[]>(isNew ? createDefaultPersonFields() : []);
   const [dirty, setDirty] = useState(false);
   const [showOriginalPreview, setShowOriginalPreview] = useState(false);
@@ -391,10 +394,10 @@ export default function PersonDetailView({
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "32px 24px 80px" }}>
         <div style={{ display: "flex", gap: 28, marginBottom: 36, alignItems: "flex-start" }}>
           <div style={{ flexShrink: 0 }}>
-            {imageUrl ? (
+            {signedImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={imageUrl}
+                src={signedImageUrl}
                 alt={name}
                 onClick={() => !isEditing && originalImageUrl && setShowOriginalPreview(true)}
                 style={{
@@ -640,7 +643,7 @@ export default function PersonDetailView({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={originalImageUrl}
+            src={signedOriginalImageUrl ?? undefined}
             alt={name}
             style={{
               maxWidth: "100%",

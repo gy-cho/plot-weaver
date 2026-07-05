@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import ImageCropModal from "@/components/ImageCropModal";
+import { useSignedImageUrl } from "@/lib/useSignedImageUrl";
 
 type Props = {
   value: string | null;
@@ -23,6 +24,7 @@ export default function ImageUploadField({ value, onChange }: Props) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cropFile, setCropFile] = useState<File | null>(null);
+  const signedValue = useSignedImageUrl(value);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,10 +56,10 @@ export default function ImageUploadField({ value, onChange }: Props) {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-        {value ? (
+        {signedValue ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={value}
+            src={signedValue}
             alt="프로필 미리보기"
             style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover" }}
           />

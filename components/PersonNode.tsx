@@ -2,6 +2,7 @@
 
 import { Handle, Position } from "reactflow";
 import { COLOR_BG, COLOR_TEXT, type Person } from "@/types";
+import { useSignedImageUrl } from "@/lib/useSignedImageUrl";
 
 export type PersonNodeData = {
   person: Person | null;
@@ -22,6 +23,7 @@ const invisibleHandleStyle: React.CSSProperties = {
 export default function PersonNode({ data }: { data: PersonNodeData }) {
   const { person, onClick } = data;
   const size = 96;
+  const signedImageUrl = useSignedImageUrl(person?.imageUrl);
 
   const bg = person ? COLOR_BG[person.color] ?? "var(--bg-hover)" : "var(--bg-surface)";
   const textColor = person ? COLOR_TEXT[person.color] ?? "var(--text-primary)" : "var(--text-tertiary)";
@@ -45,8 +47,8 @@ export default function PersonNode({ data }: { data: PersonNodeData }) {
           width: size,
           height: size,
           borderRadius: "50%",
-          backgroundColor: person?.imageUrl ? undefined : bg,
-          backgroundImage: person?.imageUrl ? `url(${person.imageUrl})` : undefined,
+          backgroundColor: signedImageUrl ? undefined : bg,
+          backgroundImage: signedImageUrl ? `url(${signedImageUrl})` : undefined,
           backgroundSize: "cover",
           backgroundPosition: "center",
           border: `1px ${person ? "solid" : "dashed"} ${borderColor}`,
@@ -61,7 +63,7 @@ export default function PersonNode({ data }: { data: PersonNodeData }) {
       >
         <Handle type="source" position={Position.Top} style={invisibleHandleStyle} isConnectable={false} />
         <Handle type="target" position={Position.Top} style={invisibleHandleStyle} isConnectable={false} />
-        {!person?.imageUrl && (
+        {!signedImageUrl && (
           <span
             style={{
               fontSize: 12,
@@ -76,7 +78,7 @@ export default function PersonNode({ data }: { data: PersonNodeData }) {
           </span>
         )}
       </div>
-      {person?.imageUrl && (
+      {signedImageUrl && (
         <span
           style={{
             fontSize: 11,
@@ -88,7 +90,7 @@ export default function PersonNode({ data }: { data: PersonNodeData }) {
             borderRadius: 6,
           }}
         >
-          {person.name}
+          {person?.name}
         </span>
       )}
     </div>

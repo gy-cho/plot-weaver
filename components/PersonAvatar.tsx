@@ -1,6 +1,7 @@
 "use client";
 
 import { COLOR_BG, COLOR_TEXT, type Person } from "@/types";
+import { useSignedImageUrl } from "@/lib/useSignedImageUrl";
 
 type Props = {
   person: Person;
@@ -9,11 +10,13 @@ type Props = {
 };
 
 export default function PersonAvatar({ person, size, fontSize }: Props) {
-  if (person.imageUrl) {
+  const signedUrl = useSignedImageUrl(person.imageUrl);
+
+  if (signedUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={person.imageUrl}
+        src={signedUrl}
         alt={person.name}
         style={{
           width: size,
